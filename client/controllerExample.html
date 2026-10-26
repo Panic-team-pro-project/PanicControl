@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>EpiAirConsole - Test Manette (Controller)</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #121212; color: #fff; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        button { background: #10b981; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }
+        button:hover { background: #059669; }
+        input { padding: 10px; font-size: 16px; border-radius: 4px; border: 1px solid #444; background: #2a2a2a; color: white; width: 100%; box-sizing: border-box; margin-bottom: 15px; }
+        #room-code { text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
+        .status-connected { color: #10b981; }
+        .status-disconnected { color: #ef4444; }
+        .error { color: #ef4444; margin-top: 10px; font-weight: bold; }
+        #active-room-view { display: none; text-align: center; }
+        #joined-room-code { font-size: 28px; font-weight: bold; color: #6366f1; letter-spacing: 2px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>🎮 Manette Smartphone (Controller)</h1>
+    
+    <div class="card">
+        <h3>État de la connexion</h3>
+        <p>Statut : <span id="connection-status" class="status-disconnected">Déconnecté</span></p>
+        <p>Socket ID : <span id="socket-id">-</span></p>
+    </div>
+
+    <div class="card" id="join-section">
+        <h3>Rejoindre une Partie</h3>
+        
+        <label for="room-code">Code du Salon :</label>
+        <input type="text" id="room-code" placeholder="Ex: ABCD" maxlength="8">
+        
+        <label for="player-name">Ton Pseudo :</label>
+        <input type="text" id="player-name" placeholder="Ex: Luigi">
+        
+        <button id="join-btn">Rejoindre le salon</button>
+        <div id="error-message" class="error"></div>
+    </div>
+
+    <div class="card" id="active-room-view">
+        <h3>Connecté au salon !</h3>
+        <div id="joined-room-code">-</div>
+        <p>En attente du lancement de la partie par la console...</p>
+    </div>
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:3000');
+
+        const statusEl = document.getElementById('connection-status');
+        const socketIdEl = document.getElementById('socket-id');
+        const joinSection = document.getElementById('join-section');
+        const activeRoomView = document.getElementById('active-room-view');
+        const joinedRoomCodeEl = document.getElementById('joined-room-code');
+        const roomCodeInput = document.getElementById('room-code');
+        const playerNameInput = document.getElementById('player-name');
+        const joinBtn = document.getElementById('join-btn');
+        const errorMessageEl = document.getElementById('error-message');
+
+        socket.on('connect', () => {
+            statusEl.textContent = 'Connecté';
+            statusEl.className = 'status-connected';
+            socketIdEl.textContent = socket.id;
+        });
+
+        socket.on('disconnect', () => {
+            statusEl.textContent = 'Déconnecté';
+            statusEl.className = 'status-disconnected';
+            socketIdEl.textContent = '-';
+        });
+
+        joinBtn.addEventListener('click', () => {
+            const roomCode = roomCodeInput.value.trim().toUpperCase();
+            const playerName = playerNameInput.value.trim();
+            errorMessageEl.textContent = '';
+
+            if (!roomCode || !playerName) {
+                errorMessageEl.textContent = "Veuillez remplir le code et le pseudo.";
+                return;
+            }
+
+            // Envoie exactement les deux arguments (roomCode, playerName) attendus par ton backend
+            socket.emit('join_room', roomCode, playerName);
+        });
+
+        socket.on('joined_room', (data) => {
+            joinSection.style.display = 'none';
+            activeRoomView.style.display = 'block';
+            joinedRoomCodeEl.textContent = data.roomCode;
+        });
+
+        socket.on('error', (err) => {
+            errorMessageEl.textContent = err.message || "Une erreur est survenue.";
+        });
+
+        // Écoute aussi la fermeture du salon par le backend (inactivité)
+        socket.on('room_closed', (data) => {
+            alert(data.message || 'Le salon a été fermé.');
+            window.location.reload();
+        });
+    </script>
+</body>
+</html>
