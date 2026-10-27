@@ -1,4 +1,7 @@
 import { Room } from './room.js';
+import eventsCodes from '../../../core/eventsCodes.js';
+
+const { ClientEvents, ServerEvents } = eventsCodes;
 
 export class RoomManager {
     private rooms: Map<string, Room>;
@@ -28,7 +31,8 @@ export class RoomManager {
                 console.log(`Room ${roomCode} has been inactive for more than 15 minutes. Removing it.`);
 
                 this.rooms.delete(roomCode);
-                this.io.to(roomCode).emit('room_closed', { message: 'Room has been closed due to inactivity.' });
+
+                this.io.to(roomCode).emit(ClientEvents.ROOM_CLOSED, { message: 'Room has been closed due to inactivity.' });
             }
         }
     }

@@ -12,7 +12,9 @@
         .status-disconnected { color: #ef4444; }
         #active-room-code { font-size: 28px; font-weight: bold; letter-spacing: 2px; color: #6366f1; }
         ul { padding-left: 20px; }
-        li { margin-bottom: 5px; }
+        li { margin-bottom: 8px; padding: 6px; border-radius: 4px; background: #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
+        .player-connected { color: #10b981; font-weight: bold; font-size: 14px; }
+        .player-disconnected { color: #f59e0b; font-weight: bold; font-size: 14px; }
         .error { color: #ef4444; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
@@ -66,6 +68,7 @@
             socketIdEl.textContent = '-';
         });
 
+        // Correction : Utilisation de 'create_room' en minuscules pour correspondre au backend
         createBtn.addEventListener('click', () => {
             socket.emit('create_room');
         });
@@ -76,7 +79,7 @@
             activeRoomCodeEl.textContent = data.roomCode;
         });
 
-        // Réception de la liste des joueurs (correspond à room.players)
+        // Réception de la liste propre générée par getPlayersNamesAndIds()
         socket.on('update_players', (players) => {
             playersListEl.innerHTML = '';
             
@@ -87,16 +90,16 @@
 
             players.forEach(player => {
                 const li = document.createElement('li');
-                // S'appuie sur la structure Player (socketId, name)
-                li.textContent = `🎮 ${player.name} (${player.socketId.substring(0, 4)}...)`;
+                const statusBadge = player.isConnected 
+                    ? '<span class="player-connected">● En ligne</span>' 
+                    : '<span class="player-disconnected">⏳ Connexion perdue...</span>';
+
+                li.innerHTML = `
+                    <span>🎮 <strong>${player.name}</strong></span>
+                    ${statusBadge}
+                `;
                 playersListEl.appendChild(li);
             });
-        });
-
-        // Écoute de l'événement de fermeture de salon (inactivité du backend)
-        socket.on('room_closed', (data) => {
-            alert(data.message || 'Le salon a été fermé.');
-            window.location.reload(); // Recharge la page pour revenir à l'état initial
         });
     </script>
 </body>
