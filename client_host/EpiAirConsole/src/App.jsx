@@ -2,6 +2,7 @@
 import { Routes, Route, Link } from "react-router-dom";
 import Home from "./pages/Home";
 import BonjourMartin from "./pages/BonjourMartin";
+import BonjourMartinController from "./pages/BonjourMartinController";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/bonjour-martin" element={<BonjourMartin />} />
+          <Route path="/bonjour-martin-controller" element={<BonjourMartinController />} />
           <Route
             path="*"
             element={

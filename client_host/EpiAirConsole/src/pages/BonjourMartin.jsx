@@ -71,7 +71,7 @@ export default function BonjourMartin() {
   const showMartin = players.length >= 1;
 
   const controllerUrl =
-    `http://192.168.1.26:5500/client/controller_test.html?roomCode=${encodeURIComponent(roomCode)}`;
+    `http://localhost:5173/bonjour-martin-controller?roomCode=${encodeURIComponent(roomCode)}`;
 
   return (
     <main className="bonjour-martin-page">
