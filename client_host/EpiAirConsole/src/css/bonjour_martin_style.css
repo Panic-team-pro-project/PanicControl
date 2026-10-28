@@ -1,0 +1,235 @@
+
+/* Bonjour Martin page */
+.bonjour-martin-page {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 20px;
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+.bonjour-martin-page .back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #a5b4fc;
+  text-decoration: none;
+}
+
+.bonjour-martin-page .back-link:hover {
+  text-decoration: underline;
+}
+
+.bonjour-martin-page h1 {
+  margin-bottom: 24px;
+}
+
+.bonjour-martin-page .card {
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.bonjour-martin-page #active-room-code {
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #6366f1;
+  overflow-wrap: anywhere;
+}
+
+.bonjour-martin-page .status-connected {
+  color: #10b981;
+}
+
+.bonjour-martin-page .status-disconnected {
+  color: #ef4444;
+}
+
+.bonjour-martin-page button {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.bonjour-martin-page button:hover {
+  background: #4338ca;
+}
+
+.bonjour-martin-page .error {
+  color: #ef4444;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+/* QR code and Martin side by side */
+.bonjour-martin-page .bm-join-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: 24px;
+  margin: 24px 0;
+}
+
+.bonjour-martin-page .bm-qr-panel,
+.bonjour-martin-page .bm-martin-panel {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 20px;
+  border-radius: 8px;
+  background: #252525;
+  text-align: center;
+}
+
+.bonjour-martin-page .bm-qr-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bonjour-martin-page .qr-code {
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+  margin: 16px auto;
+  padding: 10px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.bonjour-martin-page .qr-code svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.bonjour-martin-page .bm-martin-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.bonjour-martin-page #controllerImage {
+  display: block;
+  width: min(100%, 280px);
+  height: auto;
+  object-fit: contain;
+  margin: 16px auto;
+}
+
+/* Player list */
+.bonjour-martin-page #players-list {
+  padding-left: 20px;
+}
+
+.bonjour-martin-page #players-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  background: #2a2a2a;
+}
+
+.bonjour-martin-page .player-connected {
+  color: #10b981;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.bonjour-martin-page .player-disconnected {
+  color: #f59e0b;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* Responsive layout */
+@media (max-width: 650px) {
+  .bonjour-martin-page {
+    margin: 15px auto;
+    padding: 12px;
+  }
+
+  .bonjour-martin-page .bm-join-layout {
+    flex-direction: column;
+  }
+
+  .bonjour-martin-page .bm-qr-panel,
+  .bonjour-martin-page .bm-martin-panel {
+    width: auto;
+    flex-basis: auto;
+  }
+
+  .bonjour-martin-page #players-list li {
+    align-items: flex-start;
+  }
+}
+
+
+.wobble {
+    animation: attentionGrab 1.2s ease-in-out;
+    transform-origin: center;
+    will-change: transform, filter;
+}
+
+@keyframes attentionGrab {
+    0% {
+        transform: scale(1) rotate(0deg);
+        filter: drop-shadow(0 0 0px #ff3030);
+    }
+
+    10% {
+        transform: scale(1.3) rotate(-12deg);
+        filter: drop-shadow(0 0 15px #ff3030);
+    }
+
+    20% {
+        transform: scale(1.3) rotate(12deg);
+        filter: drop-shadow(0 0 25px #ff3030);
+    }
+
+    30% {
+        transform: scale(1.25) rotate(-10deg);
+        filter: drop-shadow(0 0 20px #ff3030);
+    }
+
+    40% {
+        transform: scale(1.25) rotate(10deg);
+        filter: drop-shadow(0 0 25px #ff3030);
+    }
+
+    50% {
+        transform: scale(1.2) rotate(-6deg);
+        filter: drop-shadow(0 0 15px #ff3030);
+    }
+
+    60% {
+        transform: scale(1.2) rotate(6deg);
+        filter: drop-shadow(0 0 20px #ff3030);
+    }
+
+    75% {
+        transform: scale(1.1) rotate(-3deg);
+        filter: drop-shadow(0 0 10px #ff3030);
+    }
+
+    90% {
+        transform: scale(1.05) rotate(2deg);
+        filter: drop-shadow(0 0 5px #ff3030);
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        filter: drop-shadow(0 0 0px #ff3030);
+    }
+}

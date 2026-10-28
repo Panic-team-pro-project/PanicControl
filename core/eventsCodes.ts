@@ -6,6 +6,7 @@ const ClientEvents = {
     PLAYER_LEFT: 'player_left',
     UPDATE_PLAYERS: 'update_players',
     DISCONNECTED_USER: 'disconnected_user',
+    GAME_INFO: 'game_info',
 } as const;
 
 const ServerEvents = {

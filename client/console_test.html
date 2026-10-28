@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>EpiAirConsole - Test Console (Hôte)</title>
+    <link rel="stylesheet" href="css/console_test_style.css">
+</head>
+<body>
+
+    <h1>📺 Écran Console (Hôte)</h1>
+    
+    <div class="card">
+        <h3>État de la connexion</h3>
+        <p>Statut : <span id="connection-status" class="status-disconnected">Déconnecté</span></p>
+        <p>Socket ID : <span id="socket-id">-</span></p>
+    </div>
+
+    <div class="card" id="create-section">
+        <h3>Lancer une partie</h3>
+        <button id="create-btn">Créer le salon</button>
+        <div id="error-message" class="error"></div>
+    </div>
+
+    <div class="card" id="room-info-section" style="display: none;">
+        <h3>Code du Salon :</h3>
+        <div id="active-room-code">-</div>
+        <p>En attente de joueurs... (Max 8)</p>
+        <h4>Joueurs connectés :</h4>
+        <div id="wait_room_martin">
+            <p>WOUAH Des Joueurs sont présents! Dites bonjour !</p>
+            <img id="controllerImage" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTP6pmEf7w2yY2rRwA10Te7leeEus5aiCjXkRm3aObOOA&s=10.png" alt="Controller">
+        </div>
+        <ul id="players-list">
+            <li><em>Aucun joueur pour l'instant</em></li>
+        </ul>
+    </div>
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:3000');
+
+        const statusEl = document.getElementById('connection-status');
+        const socketIdEl = document.getElementById('socket-id');
+        const createSection = document.getElementById('create-section');
+        const roomInfoSection = document.getElementById('room-info-section');
+        const activeRoomCodeEl = document.getElementById('active-room-code');
+        const playersListEl = document.getElementById('players-list');
+        const createBtn = document.getElementById('create-btn');
+
+        const controllerReceptor = document.getElementById('controllerImage');
+
+        socket.on('connect', () => {
+            statusEl.textContent = 'Connecté';
+            statusEl.className = 'status-connected';
+            socketIdEl.textContent = socket.id;
+        });
+
+        socket.on('disconnect', () => {
+            statusEl.textContent = 'Déconnecté';
+            statusEl.className = 'status-disconnected';
+            socketIdEl.textContent = '-';
+        });
+
+        // Correction : Utilisation de 'create_room' en minuscules pour correspondre au backend
+        createBtn.addEventListener('click', () => {
+            socket.emit('create_room');
+        });
+
+        socket.on('room_created', (data) => {
+            createSection.style.display = 'none';
+            roomInfoSection.style.display = 'block';
+            activeRoomCodeEl.textContent = data.roomCode;
+        });
+
+socket.on('game_info', (data) => {
+    const img = document.getElementById('controllerImage');
+
+    if (!img) {
+        console.log("No image");
+        return;
+    }
+    console.log("I have image");
+
+    document.getElementById('controllerImage').classList.add('wobble');
+});
+
+// Clean up after the animation finishes
+controllerReceptor.addEventListener('animationend', () => {
+    controllerReceptor.classList.remove('wobble');
+});
+        // Réception de la liste propre générée par getPlayersNamesAndIds()
+        socket.on('update_players', (players) => {
+            playersListEl.innerHTML = '';
+            
+            if (!players || players.length === 0) {
+                playersListEl.innerHTML = '<li><em>Aucun joueur pour l\'instant</em></li>';
+                return;
+            }
+
+            players.forEach(player => {
+                const li = document.createElement('li');
+                const statusBadge = player.isConnected 
+                    ? '<span class="player-connected">● En ligne</span>' 
+                    : '<span class="player-disconnected">⏳ Connexion perdue...</span>';
+
+                li.innerHTML = `
+                    <span>🎮 <strong>${player.name}</strong></span>
+                    ${statusBadge}
+                `;
+                playersListEl.appendChild(li);
+            });
+        });
+    </script>
+</body>
+</html>

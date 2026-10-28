@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10131c">
+<title>EpiAirConsole - Manette</title>
+
+<link rel="stylesheet" href="css/controller_test_style.css">
+
+
+</head>
+
+<body>
+<main class="app">
+<header>
+<div class="brand">
+<div class="logo">🎮</div>
+<div>
+<h1>EpiAirConsole</h1>
+<p class="subtitle">Mobile Controller</p>
+</div>
+</div>
+
+        <div class="status">
+            <span id="status-dot" class="dot"></span>
+            <span id="connection-status">Déconnecté</span>
+        </div>
+    </header>
+
+    <section id="join-view" class="card">
+        <p class="eyebrow">Bienvenue joueur</p>
+        <h2>Rejoins la partie</h2>
+        <p class="description">
+            Entre le code affiché sur l'écran de la console
+            pour connecter ta manette.
+        </p>
+
+        <form id="join-form">
+            <label for="room-code">Code du salon</label>
+            <input
+                id="room-code"
+                type="text"
+                placeholder="ABCD"
+                maxlength="8"
+                autocomplete="off"
+                autocapitalize="characters"
+                spellcheck="false"
+                required
+            >
+
+            <label for="player-name">Ton pseudo</label>
+            <input
+                id="player-name"
+                type="text"
+                placeholder="Ex. Luigi"
+                maxlength="15"
+                autocomplete="nickname"
+                required
+            >
+
+            <button id="join-btn" class="primary-button" type="submit">
+                Rejoindre la partie <span>→</span>
+            </button>
+
+            <div id="error-message" class="error" role="alert"></div>
+        </form>
+    </section>
+
+    <section id="controller-view" class="hidden">
+        <div class="room-banner">
+            <div>
+                <div class="room-label">Salon connecté</div>
+                <div id="joined-room-code">--------</div>
+            </div>
+            <div id="joined-player-name"></div>
+        </div>
+
+        <div class="controller-panel">
+            <div class="controller-title">
+                <p>Appuie sur le bouton pour dire bonjour.</p>
+            </div>
+
+            <button id="action-button" type="button" disabled>
+                <span>Bonjour :D</span>
+            </button>
+
+            <p id="feedback" aria-live="polite">
+                En attente de connexion...
+            </p>
+        </div>
+    </section>
+
+    <footer>
+        EpiAirConsole
+    </footer>
+</main>
+
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+<script>
+    const socket = io('http://localhost:3000');
+
+    const statusEl = document.getElementById('connection-status');
+    const statusDot = document.getElementById('status-dot');
+    const joinView = document.getElementById('join-view');
+    const controllerView = document.getElementById('controller-view');
+    const joinForm = document.getElementById('join-form');
+    const joinBtn = document.getElementById('join-btn');
+    const roomCodeInput = document.getElementById('room-code');
+    const playerNameInput = document.getElementById('player-name');
+    const errorEl = document.getElementById('error-message');
+    const roomCodeDisplay = document.getElementById('joined-room-code');
+    const playerNameDisplay = document.getElementById('joined-player-name');
+    const actionButton = document.getElementById('action-button');
+    const feedback = document.getElementById('feedback');
+
+    //Handle QR CODE
+    const params = new URLSearchParams(window.location.search);
+    const roomCode = params.get("roomCode");
+
+    if (roomCode) {
+        document.getElementById("room-code").value = roomCode.toUpperCase();
+    }
+    //End QR CODE
+
+    let playerId = localStorage.getItem('epi_player_id');
+
+    if (!playerId) {
+        playerId = 'player_' + Math.random().toString(36).slice(2, 9);
+        localStorage.setItem('epi_player_id', playerId);
+    }
+
+    let joined = false;
+    let pendingJoin = null;
+
+    socket.on('connect', () => {
+        statusEl.textContent = 'Connecté';
+        statusDot.classList.add('online');
+
+        if (joined) {
+            actionButton.disabled = false;
+            feedback.textContent = 'Connexion rétablie.';
+        }
+
+        // Retry the join if the connection dropped during joining.
+        if (pendingJoin) {
+            socket.emit(
+                'join_room',
+                pendingJoin.roomCode,
+                pendingJoin.playerName,
+                playerId
+            );
+        }
+    });
+
+    socket.on('disconnect', () => {
+        statusEl.textContent = 'Déconnecté';
+        statusDot.classList.remove('online');
+        actionButton.disabled = true;
+
+        if (joined) {
+            feedback.textContent = 'Connexion perdue. Reconnexion...';
+        }
+    });
+
+    joinForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const roomCode = roomCodeInput.value.trim().toUpperCase();
+        const playerName = playerNameInput.value.trim();
+
+        errorEl.textContent = '';
+
+        if (!roomCode || !playerName) {
+            errorEl.textContent = 'Remplis le code du salon et ton pseudo.';
+            return;
+        }
+
+        if (!socket.connected) {
+            errorEl.textContent = 'Le serveur est inaccessible. Réessaie.';
+            return;
+        }
+
+        pendingJoin = { roomCode, playerName };
+        joinBtn.disabled = true;
+        joinBtn.textContent = 'Connexion...';
+
+        socket.emit('join_room', roomCode, playerName, playerId);
+    });
+
+    socket.on('player_joined', (data) => {
+        if (!data || !data.roomCode) return;
+
+        joined = true;
+        pendingJoin = null;
+
+        joinView.classList.add('hidden');
+        controllerView.classList.remove('hidden');
+
+        roomCodeDisplay.textContent = data.roomCode;
+        playerNameDisplay.textContent =
+            data.playerName || playerNameInput.value.trim();
+
+        actionButton.disabled = !socket.connected;
+        feedback.textContent = 'Manette prête !';
+    });
+
+    socket.on('error', (err) => {
+        joinBtn.disabled = false;
+        joinBtn.textContent = 'Rejoindre la partie →';
+        pendingJoin = null;
+
+        errorEl.textContent =
+            err && err.message
+                ? err.message
+                : 'Une erreur est survenue.';
+    });
+
+    actionButton.addEventListener('click', () => {
+        if (!socket.connected || !joined) return;
+
+        socket.emit('game_info', {
+            playerId,
+            message: 'Le joueur a appuyé sur ACTION !'
+        });
+    });
+</script>
+
+
+</body>
+</html>

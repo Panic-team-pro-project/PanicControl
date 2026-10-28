@@ -25,6 +25,7 @@ export class SocketManager {
             this.handleCreateRoom(socket);
             this.handleJoinRoom(socket);
             this.handleDisconnect(socket);
+            this.handleGameInfo(socket);
         });
     }
 
@@ -39,6 +40,16 @@ export class SocketManager {
 
             console.log(`📺 Salon créé : ${roomCode} par l'hôte ${socket.id}`);
             socket.emit(ClientEvents.ROOM_CREATED, { roomCode });
+        });
+    }
+
+    private handleGameInfo(socket: Socket): void {
+        socket.on(ClientEvents.GAME_INFO, () => {
+            const roomCode = socket.data.roomCode;
+            console.log("AAAAAAAHHHHHHH");
+            if (!roomCode) return;
+            console.log("COUCOU Reçu 5 sur 5");
+            this.io.to(roomCode).emit(ClientEvents.GAME_INFO);
         });
     }
 
