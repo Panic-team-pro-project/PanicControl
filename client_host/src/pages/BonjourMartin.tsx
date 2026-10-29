@@ -3,15 +3,16 @@ import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import "../css/bonjour_martin_style.css";
 import { ConsoleSDK } from 'sdk';
+import type { PlayerListInfo } from 'sdk';
 
 export default function BonjourMartin() {
   const [connected, setConnected] = useState(false);
   const [roomCode, setRoomCode] = useState("");
-  const [players, setPlayers] = useState([]);
+  const [players, setPlayers] = useState<PlayerListInfo[]>([]);
   const [error, setError] = useState("");
   const [wobble, setWobble] = useState(false);
 
-  const sdkRef = useRef(null);
+  const sdkRef = useRef<ConsoleSDK | null>(null);
 
   useEffect(() => {
     const sdk = new ConsoleSDK("http://localhost:3000");
@@ -51,10 +52,10 @@ export default function BonjourMartin() {
 
     try {
       setError("");
-      const { roomCode } = await sdkRef.current.createRoom();
+      const roomCode = await sdkRef.current.createRoom();
 
       setRoomCode(roomCode);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || "Erreur lors de la création du salon.");
     }
   }
@@ -152,7 +153,7 @@ export default function BonjourMartin() {
               </li>
             ) : (
               players.map((player, index) => (
-                <li key={player.id || player.socketId || index}>
+                <li key={player.playerId || index}>
                   <span>
                     🎮 <strong>{player.name}</strong>
                   </span>

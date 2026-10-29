@@ -41,14 +41,14 @@ export class ControllerSDK {
                 reject(new Error("Délai d'attente dépassé pour la connexion au salon."));
             }, 5000);
 
-            this.socket.once(ClientEvents.PLAYER_JOINED, (playerId: string) => {
+            this.socket.once(ClientEvents.PLAYER_JOINED, (data: { playerId: string }) => {
                 clearTimeout(timer);
                 this.socket.off(ClientEvents.ERROR);
 
                 this.roomCode = roomCode;
-                this.playerId = playerId;
+                this.playerId = data.playerId;
 
-                resolve(playerId);
+                resolve(data.playerId);
             });
 
             this.socket.once(ClientEvents.ERROR, (error: string) => {
@@ -71,14 +71,14 @@ export class ControllerSDK {
                 reject(new Error("Délai d'attente dépassé pour la reconnexion au salon."));
             }, 5000);
 
-            this.socket.once(ClientEvents.PLAYER_JOINED, (playerId: string) => {
+            this.socket.once(ClientEvents.PLAYER_JOINED, (data: { playerId: string }) => {
                 clearTimeout(timer);
                 this.socket.off(ClientEvents.ERROR);
 
                 this.roomCode = roomCode;
-                this.playerId = playerId;
+                this.playerId = data.playerId;
 
-                resolve(playerId);
+                resolve(data.playerId);
             });
 
             this.socket.once(ClientEvents.ERROR, (error: string) => {

@@ -37,12 +37,12 @@ export class ConsoleSDK {
                 reject(new Error("Délai d'attente dépassé pour la création du salon."));
             }, 5000);
 
-            this.socket.once(ClientEvents.ROOM_CREATED, (roomCode: string) => {
+            this.socket.once(ClientEvents.ROOM_CREATED, (data: { roomCode: string }) => {
                 clearTimeout(timer);
                 this.socket.off(ClientEvents.ERROR);
 
-                this.roomCode = roomCode;
-                resolve(roomCode);
+                this.roomCode = data.roomCode;
+                resolve(data.roomCode);
             });
 
             this.socket.once(ClientEvents.ERROR, (error: string) => {

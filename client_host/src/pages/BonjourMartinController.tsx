@@ -6,14 +6,13 @@ import { ControllerSDK } from "sdk";
 const SOCKET_URL = "http://localhost:3000";
 
 export default function Controller() {
-  const sdkRef = useRef(null);
+  const sdkRef = useRef<ControllerSDK | null>(null);
 
   const [connected, setConnected] = useState(false);
   const [joined, setJoined] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [playerName, setPlayerName] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [playerId, setPlayerId] = useState("");
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("En attente de connexion...");
   const [joining, setJoining] = useState(false);
@@ -36,7 +35,7 @@ export default function Controller() {
     };
   }, []);
 
-  async function handleJoin(event) {
+  async function handleJoin(event: any) {
     event.preventDefault();
 
     const code = roomCode.trim().toUpperCase();
@@ -59,18 +58,17 @@ export default function Controller() {
     const savedPlayerId = localStorage.getItem("player_id");
 
     try {
-      const { playerId: assignedPlayerId } = savedPlayerId
+      const assignedPlayerId = savedPlayerId
         ? await sdkRef.current.reconnectToRoom(code, name, savedPlayerId)
         : await sdkRef.current.joinRoom(code, name);
 
       localStorage.setItem("player_id", assignedPlayerId);
-      setPlayerId(assignedPlayerId);
       setJoined(true);
       setJoining(false);
       setRoomCode(code);
       setDisplayName(name);
       setFeedback("Manette prête !");
-    } catch (err) {
+    } catch (err: any) {
       if (savedPlayerId) {
         localStorage.removeItem("player_id");
       }
@@ -83,12 +81,12 @@ export default function Controller() {
   function handleAction() {
     if (!sdkRef.current || !joined) return;
 
-    if (sdkRef.current.sendAction) {
-      sdkRef.current.sendAction({
-        playerId: playerId,
-        message: "Le joueur a appuyé sur ACTION !",
-      });
-    }
+    // if (sdkRef.current.sendAction) {
+    //   sdkRef.current.sendAction({
+    //     playerId: playerId,
+    //     message: "Le joueur a appuyé sur ACTION !",
+    //   });
+    // }
   }
 
   return (
