@@ -1,5 +1,5 @@
 import { Room } from './room.js';
-import eventsCodes from '../../../core/eventsCodes.js';
+import eventsCodes from 'common';
 
 const { ClientEvents, ServerEvents } = eventsCodes;
 

@@ -2,7 +2,7 @@ import type { Server, Socket } from "socket.io";
 import { RoomManager } from "./roomManager.js";
 import { generatePlayerId, generateRoomCode } from "../core/utils.js";
 import { Player } from "./player.js";
-import eventsCodes from "../../../core/eventsCodes.js";
+import eventsCodes from "common";
 import { validatePlayerName } from "../core/pseudoFilter.js";
 import type { Room } from "./room.js";
 
@@ -118,7 +118,7 @@ export class SocketManager {
             socket.data.playerId = player.playerId;
 
             console.log(`📱 Joueur ${playerName} (${socket.id}) a rejoint ${roomCode}`);
-            socket.emit(ClientEvents.PLAYER_JOINED, { roomCode });
+            socket.emit(ClientEvents.PLAYER_JOINED, { playerId: player.playerId });
 
             this.io.to(roomCode).emit(ClientEvents.UPDATE_PLAYERS, room.getPlayersNamesAndIds());
         });
