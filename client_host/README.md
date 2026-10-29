@@ -1,3 +1,8 @@
+---------------------------------------------------------
+TO LAUNCH THE APP BUILD THE SDK FIRST THEN LAUNCH THE APP
+---------------------------------------------------------
+
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
