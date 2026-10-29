@@ -24,6 +24,10 @@ export class ConsoleSDK {
         });
     }
 
+    disconnect(): void {
+        this.socket.disconnect();
+    }
+
     createRoom(): Promise<string> {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {

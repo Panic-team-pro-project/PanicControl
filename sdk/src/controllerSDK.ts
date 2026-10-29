@@ -9,30 +9,27 @@ export class ControllerSDK {
     public roomCode: string | null = null;
     public playerId: string | null = null;
 
-    private backupRoomCode: string | null = null;
-    private backupPlayerId: string | null = null;
-    private backupPlayerName: string | null = null;
-
-    constructor(serverUrl: string) {
+    constructor(serverUrl: string, playerId?: string) {
         this.socket = io(serverUrl);
+        if (playerId) {
+            this.playerId = playerId;
+        }
+
         this.initListeners();
     }
 
     private initListeners(): void {
         this.socket.on('connect', () => {
             console.log(`🟢 Manette connectée au serveur (ID: ${this.socket.id})`);
-
-            if (this.backupRoomCode && this.backupPlayerName && this.backupPlayerId) {
-                console.log("🔄 Tentative de reconnexion automatique au salon...");
-                this.reconnectToRoom(this.backupRoomCode, this.backupPlayerName, this.backupPlayerId)
-                    .then(() => console.log("✅ Reconnexion automatique réussie !"))
-                    .catch((err) => console.error("❌ Échec de la reconnexion auto :", err.message));
-            }
         });
 
         this.socket.on('disconnect', (reason) => {
             console.warn(`🔴 Manette déconnectée du serveur. Raison : ${reason}`);
         });
+    }
+
+    disconnect(): void {
+        this.socket.disconnect();
     }
 
     joinRoom(roomCode: string, playerName: string): Promise<string> {
@@ -51,10 +48,6 @@ export class ControllerSDK {
                 this.roomCode = roomCode;
                 this.playerId = playerId;
 
-                this.backupRoomCode = roomCode;
-                this.backupPlayerId = playerId;
-                this.backupPlayerName = playerName;
-
                 resolve(playerId);
             });
 
@@ -65,7 +58,7 @@ export class ControllerSDK {
                 reject(new Error(error));
             });
 
-            this.socket.emit(ServerEvents.JOIN_ROOM, { roomCode, playerName });
+            this.socket.emit(ServerEvents.JOIN_ROOM, roomCode, playerName );
         });
     }
 
@@ -85,10 +78,6 @@ export class ControllerSDK {
                 this.roomCode = roomCode;
                 this.playerId = playerId;
 
-                this.backupRoomCode = roomCode;
-                this.backupPlayerId = playerId;
-                this.backupPlayerName = playerName;
-
                 resolve(playerId);
             });
 
@@ -99,7 +88,7 @@ export class ControllerSDK {
                 reject(new Error(error));
             });
 
-            this.socket.emit(ServerEvents.JOIN_ROOM, { roomCode, playerName, playerId });
+            this.socket.emit(ServerEvents.JOIN_ROOM, roomCode, playerName, playerId );
         });
     }
 }

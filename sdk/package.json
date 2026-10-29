@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsdown src/index.ts --format cjs,esm --dts --out-dir dist"
+    "build": "tsdown src/index.ts --format cjs,esm --dts --out-dir dist",
+    "dev": "tsdown src/index.ts --format cjs,esm --dts --out-dir dist --watch"
   },
   "keywords": [],
   "author": "",

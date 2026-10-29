@@ -1,71 +1,62 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { io } from "socket.io-client";
 import { QRCodeSVG } from "qrcode.react";
 import "../css/bonjour_martin_style.css";
+import { ConsoleSDK } from 'sdk';
 
 export default function BonjourMartin() {
   const [connected, setConnected] = useState(false);
-  const [socketId, setSocketId] = useState("-");
   const [roomCode, setRoomCode] = useState("");
   const [players, setPlayers] = useState([]);
   const [error, setError] = useState("");
   const [wobble, setWobble] = useState(false);
 
-  const socketRef = useRef(null);
+  const sdkRef = useRef(null);
 
   useEffect(() => {
-    const socket = io("http://localhost:3000");
-    socketRef.current = socket;
+    const sdk = new ConsoleSDK("http://localhost:3000");
+    sdkRef.current = sdk;
 
-    socket.on("connect", () => {
-      setConnected(true);
-      setSocketId(socket.id);
-      setError("");
-    });
+    setConnected(true);
 
-    socket.on("disconnect", () => {
-      setConnected(false);
-      setSocketId("-");
-    });
-
-    socket.on("connect_error", (err) => {
-      setError(err.message);
-    });
-
-    socket.on("room_created", (data) => {
-      setRoomCode(data.roomCode);
-      setError("");
-    });
-
-    socket.on("update_players", (updatedPlayers) => {
+    sdk.onUpdatePlayers((updatedPlayers) => {
       setPlayers(Array.isArray(updatedPlayers) ? updatedPlayers : []);
     });
 
-    socket.on("game_info", () => {
-    setWobble(false);
-
-    requestAnimationFrame(() => {
+    sdk.onGameInfo(() => {
+      setWobble(false);
+      requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-        setWobble(true);
+          setWobble(true);
         });
+      });
     });
+
+    sdk.onRoomClosed((message) => {
+      setError(message);
+      setRoomCode("");
     });
 
     return () => {
-      socket.disconnect();
-      socketRef.current = null;
+      sdk.disconnect();
+      sdkRef.current = null;
     };
   }, []);
 
-  function createRoom() {
-    if (!socketRef.current?.connected) {
-      setError("Le serveur est déconnecté.");
+  async function createRoom() {
+    if (!sdkRef.current) {
+      setError("Le SDK n'est pas initialisé.");
       return;
     }
 
-    setError("");
-    socketRef.current.emit("create_room");
+    try {
+      setError("");
+      const { roomCode } = await sdkRef.current.createRoom();
+
+      setRoomCode(roomCode);
+    } catch (err) {
+      setError(err.message || "Erreur lors de la création du salon.");
+    }
   }
 
   const showMartin = players.length >= 1;
@@ -93,10 +84,6 @@ export default function BonjourMartin() {
           >
             {connected ? "Connecté" : "Déconnecté"}
           </span>
-        </p>
-
-        <p>
-          Socket ID : <span>{socketId}</span>
         </p>
       </section>
 

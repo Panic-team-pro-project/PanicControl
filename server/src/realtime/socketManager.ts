@@ -68,6 +68,7 @@ export class SocketManager {
         console.log(`🔄 Joueur ${player.name} (${socket.id}) s'est reconnecté avec succès.`);
         player.socketId = socket.id;
         player.isConnected = true;
+        clearTimeout(player.disconnectTimer);
 
         return player;
     }

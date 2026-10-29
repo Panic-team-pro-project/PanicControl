@@ -1,104 +1,42 @@
 
 import { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
 import "../css/controller_test_style.css";
+import { ControllerSDK } from "sdk";
 
 const SOCKET_URL = "http://localhost:3000";
 
 export default function Controller() {
-  const socketRef = useRef(null);
-  const pendingJoinRef = useRef(null);
-  const joinedRef = useRef(false);
-  const playerIdRef = useRef("");
+  const sdkRef = useRef(null);
 
   const [connected, setConnected] = useState(false);
   const [joined, setJoined] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [playerName, setPlayerName] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [playerId, setPlayerId] = useState("");
   const [error, setError] = useState("");
-  const [feedback, setFeedback] = useState(
-    "En attente de connexion..."
-  );
+  const [feedback, setFeedback] = useState("En attente de connexion...");
   const [joining, setJoining] = useState(false);
 
   useEffect(() => {
-    // Persistent player ID
-    let playerId = localStorage.getItem("epi_player_id");
-
-    if (!playerId) {
-      playerId = "player_" + Math.random().toString(36).slice(2, 9);
-      localStorage.setItem("epi_player_id", playerId);
-    }
-
-    playerIdRef.current = playerId;
-
     // Prefill room code from QR code URL
     const params = new URLSearchParams(window.location.search);
     const code = params.get("roomCode");
-
     if (code) {
       setRoomCode(code.toUpperCase());
     }
 
-    const socket = io(SOCKET_URL);
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      setConnected(true);
-
-      if (joinedRef.current) {
-        setFeedback("Connexion rétablie.");
-      }
-
-      // Retry a pending join after reconnection
-      if (pendingJoinRef.current) {
-        const { roomCode, playerName } = pendingJoinRef.current;
-
-        socket.emit(
-          "join_room",
-          roomCode,
-          playerName,
-          playerIdRef.current
-        );
-      }
-    });
-
-    socket.on("disconnect", () => {
-      setConnected(false);
-
-      if (joinedRef.current) {
-        setFeedback("Connexion perdue. Reconnexion...");
-      }
-    });
-
-    socket.on("player_joined", (data) => {
-      if (!data?.roomCode) return;
-
-      joinedRef.current = true;
-      pendingJoinRef.current = null;
-
-      setJoined(true);
-      setJoining(false);
-      setRoomCode(data.roomCode);
-      setDisplayName(data.playerName || playerName);
-      setFeedback("Manette prête !");
-    });
-
-    socket.on("error", (err) => {
-      pendingJoinRef.current = null;
-      setJoining(false);
-      setError(err?.message || "Une erreur est survenue.");
-    });
+    const sdk = new ControllerSDK(SOCKET_URL);
+    sdkRef.current = sdk;
+    setConnected(true);
 
     return () => {
-      socket.removeAllListeners();
-      socket.disconnect();
-      socketRef.current = null;
+      sdk.disconnect();
+      sdkRef.current = null;
     };
   }, []);
 
-  function handleJoin(event) {
+  async function handleJoin(event) {
     event.preventDefault();
 
     const code = roomCode.trim().toUpperCase();
@@ -111,34 +49,46 @@ export default function Controller() {
       return;
     }
 
-    const socket = socketRef.current;
-
-    if (!socket?.connected) {
-      setError("Le serveur est inaccessible. Réessaie.");
+    if (!sdkRef.current) {
+      setError("Le SDK n'est pas initialisé.");
       return;
     }
 
-    setRoomCode(code);
-    setPlayerName(name);
     setJoining(true);
 
-    pendingJoinRef.current = {
-      roomCode: code,
-      playerName: name,
-    };
+    const savedPlayerId = localStorage.getItem("player_id");
 
-    socket.emit("join_room", code, name, playerIdRef.current);
+    try {
+      const { playerId: assignedPlayerId } = savedPlayerId
+        ? await sdkRef.current.reconnectToRoom(code, name, savedPlayerId)
+        : await sdkRef.current.joinRoom(code, name);
+
+      localStorage.setItem("player_id", assignedPlayerId);
+      setPlayerId(assignedPlayerId);
+      setJoined(true);
+      setJoining(false);
+      setRoomCode(code);
+      setDisplayName(name);
+      setFeedback("Manette prête !");
+    } catch (err) {
+      if (savedPlayerId) {
+        localStorage.removeItem("player_id");
+      }
+
+      setJoining(false);
+      setError(err.message || "Impossible de rejoindre le salon.");
+    }
   }
 
   function handleAction() {
-    const socket = socketRef.current;
+    if (!sdkRef.current || !joined) return;
 
-    if (!socket?.connected || !joinedRef.current) return;
-
-    socket.emit("game_info", {
-      playerId: playerIdRef.current,
-      message: "Le joueur a appuyé sur ACTION !",
-    });
+    if (sdkRef.current.sendAction) {
+      sdkRef.current.sendAction({
+        playerId: playerId,
+        message: "Le joueur a appuyé sur ACTION !",
+      });
+    }
   }
 
   return (
