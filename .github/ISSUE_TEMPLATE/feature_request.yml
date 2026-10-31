@@ -1,0 +1,37 @@
+name: Feature request
+description: A new capability, written as a user story.
+title: 'feat: '
+labels: ['feat']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Title format: `feat(<scope>): short description`, for example `feat(player): show who is the host`.
+        An item is ready for a sprint when it has acceptance criteria, an estimate and no open question.
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      description: Who needs this, what they want and why.
+      value: 'As a <host | player | game developer>, I want <goal> so that <benefit>.'
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete, testable conditions. The feature is accepted only when all of them are met.
+      value: |
+        - [ ] Given <situation>, when <action>, then <result>.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Mockups, links, technical notes, open questions.
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this item deliberately doesn't cover.

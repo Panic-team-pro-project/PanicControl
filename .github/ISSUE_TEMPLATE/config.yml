@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Contribution guide
+    url: https://github.com/Panic-team-pro-project/PanicControl/blob/develop/CONTRIBUTING.md
+    about: How to work on an issue, name branches and open pull requests.
+  - name: Report a security problem
+    url: https://github.com/orgs/Panic-team-pro-project/people
+    about: Don't open a public issue. Contact the project maintainers privately.
