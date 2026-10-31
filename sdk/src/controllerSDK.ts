@@ -1,5 +1,5 @@
-import { io } from "socket.io-client";
-import type { Socket } from "socket.io-client";
+import { io } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 import eventsCodes from 'common';
 
 const { ClientEvents, ServerEvents } = eventsCodes;
@@ -58,7 +58,7 @@ export class ControllerSDK {
                 reject(new Error(error));
             });
 
-            this.socket.emit(ServerEvents.JOIN_ROOM, roomCode, playerName );
+            this.socket.emit(ServerEvents.JOIN_ROOM, roomCode, playerName);
         });
     }
 
@@ -88,7 +88,7 @@ export class ControllerSDK {
                 reject(new Error(error));
             });
 
-            this.socket.emit(ServerEvents.JOIN_ROOM, roomCode, playerName, playerId );
+            this.socket.emit(ServerEvents.JOIN_ROOM, roomCode, playerName, playerId);
         });
     }
 }

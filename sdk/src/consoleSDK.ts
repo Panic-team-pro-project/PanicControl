@@ -1,7 +1,7 @@
-import { io } from "socket.io-client";
-import type { Socket } from "socket.io-client";
+import { io } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 import eventsCodes from 'common';
-import type { PlayerListInfo } from "./Types/consoleTypes.js";
+import type { PlayerListInfo } from './Types/consoleTypes.js';
 
 const { ClientEvents, ServerEvents } = eventsCodes;
 

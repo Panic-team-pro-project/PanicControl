@@ -5,7 +5,17 @@ const profanityFilter = new Filter({
     detectLeetspeak: true,
     leetspeakLevel: 'aggressive',
     normalizeUnicode: true,
-    customWords: ['hitler', 'nazi', 'fasciste', 'dictateur', 'tyran', 'stalin', 'mao', 'lenin', 'fdp'],
+    customWords: [
+        'hitler',
+        'nazi',
+        'fasciste',
+        'dictateur',
+        'tyran',
+        'stalin',
+        'mao',
+        'lenin',
+        'fdp',
+    ],
 });
 
 export function validatePlayerName(name: string): boolean {

@@ -19,3 +19,4 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Configuration through environment variables, documented in `.env.example` files.
 - Lint and formatting (ESLint, Prettier) and Git hooks checking commit messages (Husky, commitlint).
 - Contribution rules, good practice guide, code of conduct, issue and pull request templates.
+- Docker images for the server and the web app, and a Compose file that runs the whole platform.

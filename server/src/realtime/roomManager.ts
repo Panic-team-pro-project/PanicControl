@@ -1,16 +1,17 @@
 import { Room } from './room.js';
+import type { Server } from 'socket.io';
 import eventsCodes from 'common';
 
-const { ClientEvents, ServerEvents } = eventsCodes;
+const { ClientEvents } = eventsCodes;
 
 export class RoomManager {
     private rooms: Map<string, Room>;
     private cleanupInterval: NodeJS.Timeout;
     private readonly ROOM_INACTIVITY_THRESHOLD = 15 * 60 * 1000; // 15 minutes
     private readonly ROOM_CLEANUP_INTERVAL = 60 * 1000; // 60 seconds
-    private io: any;
+    private io: Server;
 
-    constructor(io: any) {
+    constructor(io: Server) {
         this.io = io;
         this.rooms = new Map<string, Room>();
 
@@ -20,7 +21,7 @@ export class RoomManager {
 
         // DEBUG:
         // this.cleanupInterval = setInterval(() => {
-            // this.cleanInactiveRooms(30 * 1000);
+        // this.cleanInactiveRooms(30 * 1000);
         // }, 10 * 1000);
     }
 
@@ -28,11 +29,15 @@ export class RoomManager {
         const now = Date.now();
         for (const [roomCode, room] of this.rooms.entries()) {
             if (now - room.lastActionTimestamp > inactivityThreshold) {
-                console.log(`Room ${roomCode} has been inactive for more than 15 minutes. Removing it.`);
+                console.log(
+                    `Room ${roomCode} has been inactive for more than 15 minutes. Removing it.`,
+                );
 
                 this.rooms.delete(roomCode);
 
-                this.io.to(roomCode).emit(ClientEvents.ROOM_CLOSED, { message: 'Room has been closed due to inactivity.' });
+                this.io.to(roomCode).emit(ClientEvents.ROOM_CLOSED, {
+                    message: 'Room has been closed due to inactivity.',
+                });
             }
         }
     }
