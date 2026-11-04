@@ -11,6 +11,7 @@ export default function BonjourMartin() {
   const [players, setPlayers] = useState<PlayerListInfo[]>([]);
   const [error, setError] = useState("");
   const [wobble, setWobble] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
 
   const sdkRef = useRef<ConsoleSDK | null>(null);
 
@@ -18,7 +19,19 @@ export default function BonjourMartin() {
     const sdk = new ConsoleSDK("http://localhost:3000");
     sdkRef.current = sdk;
 
-    setConnected(true);
+    sdk.onConnect(() => {
+      setConnected(true);
+
+      const savedRoomCode = localStorage.getItem("console_room_code");
+      if (savedRoomCode && !roomCode) {
+        handleReconnect(savedRoomCode);
+      }
+    });
+
+    sdk.onDisconnect((reason) => {
+      setConnected(false);
+      setError(`Connexion perdue (${reason}). Reconnexion...`);
+    });
 
     sdk.onUpdatePlayers((updatedPlayers) => {
       setPlayers(Array.isArray(updatedPlayers) ? updatedPlayers : []);
@@ -36,6 +49,11 @@ export default function BonjourMartin() {
     sdk.onRoomClosed((message) => {
       setError(message);
       setRoomCode("");
+      localStorage.removeItem("console_room_code");
+    });
+
+    sdk.onDisconnectedUser((playerId) => {
+      setPlayers((prevPlayers) => prevPlayers.filter(player => player.playerId !== playerId));
     });
 
     return () => {
@@ -55,11 +73,34 @@ export default function BonjourMartin() {
       const roomCode = await sdkRef.current.createRoom();
 
       setRoomCode(roomCode);
+      localStorage.setItem("console_room_code", roomCode);
     } catch (err: any) {
       setError(err.message || "Erreur lors de la création du salon.");
     }
   }
 
+  async function handleReconnect(codeToReconnect?: string) {
+    if (!sdkRef.current) return;
+
+    const code = codeToReconnect || localStorage.getItem("console_room_code");
+    if (!code) return;
+
+    setIsReconnecting(true);
+    setError("");
+
+    try {
+      const activeRoomCode = await sdkRef.current.reconnectToRoom(code);
+      setRoomCode(activeRoomCode);
+      localStorage.setItem("console_room_code", activeRoomCode);
+    } catch (err: any) {
+      setError(err.message || "Impossible de se reconnecter au salon.");
+      localStorage.removeItem("console_room_code");
+    } finally {
+      setIsReconnecting(false);
+    }
+  }
+
+  const savedRoomCode = localStorage.getItem("console_room_code");
   const showMartin = players.length >= 1;
 
   const controllerUrl =
@@ -88,7 +129,21 @@ export default function BonjourMartin() {
         </p>
       </section>
 
-      {!roomCode && (
+      {!roomCode && savedRoomCode && (
+        <section className="card" id="reconnect-section">
+          <h3>Salon précédent détecté</h3>
+          <p>Un salon ({savedRoomCode}) était en cours.</p>
+          <button onClick={() => handleReconnect(savedRoomCode)} disabled={isReconnecting}>
+            {isReconnecting ? "Reconnexion..." : `Reprendre le salon ${savedRoomCode}`}
+          </button>
+          <button onClick={() => localStorage.removeItem("console_room_code")} style={{ marginLeft: "10px" }}>
+            Ignorer
+          </button>
+          {error && <div className="error">{error}</div>}
+        </section>
+      )}
+
+      {!roomCode && !savedRoomCode && (
         <section className="card" id="create-section">
           <h3>Lancer une partie</h3>
 
@@ -154,9 +209,16 @@ export default function BonjourMartin() {
             ) : (
               players.map((player, index) => (
                 <li key={player.playerId || index}>
-                  <span>
-                    🎮 <strong>{player.name}</strong>
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>
+                      🎮 <strong>{player.name}</strong>
+                    </span>
+                    {player.isHost && (
+                      <span className="player-host-badge" style={{ fontSize: "0.8rem", background: "#ffd700", color: "#000", padding: "2px 6px", borderRadius: "4px", fontWeight: "bold" }}>
+                        👑 Hôte
+                      </span>
+                    )}
+                  </div>
 
                   {player.isConnected ? (
                     <span className="player-connected">
