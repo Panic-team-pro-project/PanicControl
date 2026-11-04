@@ -24,6 +24,18 @@ export class ConsoleSDK {
         });
     }
 
+    onConnect(callback: () => void): void {
+        this.socket.on('connect', () => {
+            callback();
+        });
+    }
+
+    onDisconnect(callback: (reason: string) => void): void {
+        this.socket.on('disconnect', (reason) => {
+            callback(reason);
+        });
+    }
+
     disconnect(): void {
         this.socket.disconnect();
     }
@@ -53,6 +65,40 @@ export class ConsoleSDK {
             });
 
             this.socket.emit(ServerEvents.CREATE_ROOM);
+        });
+    }
+
+    reconnectToRoom(roomCode: string): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                this.socket.off(ClientEvents.RECONNECTED_TO_ROOM);
+                this.socket.off(ClientEvents.ERROR);
+
+                reject(new Error("Délai d'attente dépassé pour la reconnexion au salon."));
+            }, 5000);
+
+            this.socket.once(ClientEvents.RECONNECTED_TO_ROOM, (data: { roomCode: string }) => {
+                clearTimeout(timer);
+                this.socket.off(ClientEvents.ERROR);
+
+                this.roomCode = data.roomCode;
+                resolve(data.roomCode);
+            });
+
+            this.socket.once(ClientEvents.ERROR, (error: string) => {
+                clearTimeout(timer);
+                this.socket.off(ClientEvents.RECONNECTED_TO_ROOM);
+
+                reject(new Error(error));
+            });
+
+            this.socket.emit(ServerEvents.RECONNECT_TO_ROOM, roomCode);
+        });
+    }
+
+    onReconnectedToRoom(callback: (message: string) => void): void {
+        this.socket.on(ClientEvents.RECONNECTED_TO_ROOM, (data: { message: string }) => {
+            callback(data.message);
         });
     }
 

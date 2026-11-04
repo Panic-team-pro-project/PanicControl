@@ -28,6 +28,18 @@ export class ControllerSDK {
         });
     }
 
+    onConnect(callback: () => void): void {
+        this.socket.on('connect', () => {
+            callback();
+        });
+    }
+
+    onDisconnect(callback: (reason: string) => void): void {
+        this.socket.on('disconnect', (reason) => {
+            callback(reason);
+        });
+    }
+
     disconnect(): void {
         this.socket.disconnect();
     }
@@ -89,6 +101,24 @@ export class ControllerSDK {
             });
 
             this.socket.emit(ServerEvents.JOIN_ROOM, roomCode, playerName, playerId );
+        });
+    }
+
+    onPromoteToHost(callback: () => void): void {
+        this.socket.on(ClientEvents.PROMOTE_TO_HOST, () => {
+            callback();
+        });
+    }
+
+    onConsoleDisconnected(callback: (message: string) => void): void {
+        this.socket.on(ClientEvents.CONSOLE_DISCONNECTED, (data: { message: string }) => {
+            callback(data.message);
+        });
+    }
+
+    onConsoleReconnected(callback: (message: string) => void): void {
+        this.socket.on(ClientEvents.CONSOLE_RECONNECTED, (data: { message: string }) => {
+            callback(data.message);
         });
     }
 }
