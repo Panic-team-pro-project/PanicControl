@@ -1,0 +1,33 @@
+# Runs the whole platform: docker compose up --build
+# Settings are read from .env at the repository root (see .env.example) and from server/.env.
+
+name: panic-control
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    env_file:
+      - path: server/.env
+        required: false
+    environment:
+      # The port inside the container stays fixed; SERVER_PORT changes the port on the host
+      PORT: 3000
+    ports:
+      - '${SERVER_PORT:-3000}:3000'
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: client_host/Dockerfile
+      args:
+        VITE_SERVER_URL: ${VITE_SERVER_URL:-}
+        VITE_PUBLIC_URL: ${VITE_PUBLIC_URL:-}
+    ports:
+      - '${WEB_PORT:-8080}:80'
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: unless-stopped

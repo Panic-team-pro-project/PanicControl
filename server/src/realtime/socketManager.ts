@@ -1,10 +1,10 @@
-import type { Server, Socket } from "socket.io";
-import { RoomManager } from "./roomManager.js";
-import { generatePlayerId, generateRoomCode } from "../core/utils.js";
-import { Player } from "./player.js";
-import eventsCodes from "common";
-import { validatePlayerName } from "../core/pseudoFilter.js";
-import type { Room } from "./room.js";
+import type { Server, Socket } from 'socket.io';
+import { RoomManager } from './roomManager.js';
+import { generatePlayerId, generateRoomCode } from '../core/utils.js';
+import { Player } from './player.js';
+import eventsCodes from 'common';
+import { validatePlayerName } from '../core/pseudoFilter.js';
+import type { Room } from './room.js';
 
 const { ClientEvents, ServerEvents } = eventsCodes;
 
@@ -76,19 +76,23 @@ export class SocketManager {
     private handleGameInfo(socket: Socket): void {
         socket.on(ClientEvents.GAME_INFO, () => {
             const roomCode = socket.data.roomCode;
-            console.log("AAAAAAAHHHHHHH");
+            console.log('AAAAAAAHHHHHHH');
             if (!roomCode) return;
-            console.log("COUCOU Reçu 5 sur 5");
+            console.log('COUCOU Reçu 5 sur 5');
             this.io.to(roomCode).emit(ClientEvents.GAME_INFO);
         });
     }
 
     private isReconnection(playerId: string, players: Player[]): boolean {
-        return players.some(player => player.playerId === playerId);
+        return players.some((player) => player.playerId === playerId);
     }
 
-    private reconnectPlayer(socket: Socket, playerId: string, players: Player[]): Player | undefined {
-        const player = players.find(p => p.playerId === playerId);
+    private reconnectPlayer(
+        socket: Socket,
+        playerId: string,
+        players: Player[],
+    ): Player | undefined {
+        const player = players.find((p) => p.playerId === playerId);
 
         if (!player) {
             console.log(`❌ Joueur introuvable pour la reconnexion : ${playerId}`);
@@ -155,8 +159,16 @@ export class SocketManager {
             socket.data.roomCode = roomCode;
             socket.data.playerId = player.playerId;
 
-            console.log(`📱 Joueur ${playerName} (${socket.id}) a rejoint ${roomCode}`);
-            socket.emit(ClientEvents.PLAYER_JOINED, { playerId: player.playerId });
+                const newPlayerId = playerId || generatePlayerId();
+                console.log(
+                    `🔑 Tentative de connexion du joueur ${playerName} (${socket.id}) au salon ${roomCode} newPlayerId: ${newPlayerId}`,
+                );
+                let player: Player | undefined;
+                if (this.isReconnection(newPlayerId, room.players)) {
+                    player = this.reconnectPlayer(socket, newPlayerId, room.players);
+                } else {
+                    player = this.connectPlayer(socket, playerName, newPlayerId, room, roomCode);
+                }
 
             this.io.to(roomCode).emit(ClientEvents.UPDATE_PLAYERS, room.getPlayersInfos());
         });

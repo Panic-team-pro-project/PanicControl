@@ -25,7 +25,7 @@ const ServerEvents = {
 
 const eventsCodes = {
     ClientEvents,
-    ServerEvents
+    ServerEvents,
 };
 
 export default eventsCodes;

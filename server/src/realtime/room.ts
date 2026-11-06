@@ -27,7 +27,8 @@ export class Room {
     }
 
     addPlayer(player: Player): boolean {
-        if (this.players.length >= 2) { // 8 players limit
+        if (this.players.length >= 2) {
+            // 8 players limit
             return false;
         }
         this.players.push(player);
@@ -36,7 +37,7 @@ export class Room {
     }
 
     removePlayer(socketId: string): void {
-        this.players = this.players.filter(player => player.socketId !== socketId);
+        this.players = this.players.filter((player) => player.socketId !== socketId);
         this.updateLastActionTimestamp();
     }
 
