@@ -72,8 +72,44 @@ export default function Controller() {
         }
     }
 
-    function handleAction() {
-        if (!sdkRef.current || !joined) return;
+    const sdk = new ControllerSDK(SOCKET_URL);
+    sdkRef.current = sdk;
+
+    sdk.onConnect(() => {
+      setConnected(true);
+      setFeedback("Connecté au serveur !");
+    }),
+
+    sdk.onDisconnect((reason) => {
+      setConnected(false);
+      setFeedback(`Connexion perdue (${reason}). Reconnexion...`);
+    });
+
+    sdk.onPromoteToHost(() => {
+      setFeedback("Tu es maintenant l'hôte du salon !");
+    });
+
+    sdk.onConsoleDisconnected((message) => {
+      setFeedback(`La console s'est déconnecté. Reconnexion... (${message})`);
+    });
+
+    sdk.onConsoleReconnected((message) => {
+      setFeedback(`La console est de retour ! (${message})`);
+    });
+
+    return () => {
+      sdk.disconnect();
+      sdkRef.current = null;
+    };
+  }, []);
+
+  async function handleJoin(event: any) {
+    event.preventDefault();
+
+    const code = roomCode.trim().toUpperCase();
+    const name = playerName.trim();
+
+    setError("");
 
         // if (sdkRef.current.sendAction) {
         //   sdkRef.current.sendAction({
