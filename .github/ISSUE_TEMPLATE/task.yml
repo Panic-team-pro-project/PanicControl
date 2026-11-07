@@ -1,0 +1,30 @@
+name: Task
+description: Technical work with no direct user-visible change (tooling, refactoring, documentation).
+title: 'chore: '
+labels: ['chore']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use the commit type that fits as the title prefix: `chore`, `refactor`, `docs`, `build`, `ci`, `test`.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What needs to be done and why.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: The checks that tell this task is finished.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Links, constraints, related issues.

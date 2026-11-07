@@ -1,0 +1,60 @@
+name: Bug report
+description: Something doesn't work as expected.
+title: 'fix: '
+labels: ['fix']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Check that it isn't already reported before opening a new issue.
+        Title format: `fix(<scope>): short description`, for example `fix(room): host can't close a full room`.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is the problem?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The exact steps that trigger the bug.
+      placeholder: |
+        1. Open the console page and create a room
+        2. Join from a phone with the name "Luigi"
+        3. Turn off the phone's Wi-Fi
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happens instead. Add screenshots or logs if you have them.
+    validations:
+      required: true
+  - type: dropdown
+    id: part
+    attributes:
+      label: Part of the project
+      multiple: true
+      options:
+        - Console (shared screen)
+        - Controller (phone)
+        - Server
+        - SDK
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, device and operating system, branch or commit.
+      placeholder: Chrome 130 on Android 15, branch develop at a1b2c3d
