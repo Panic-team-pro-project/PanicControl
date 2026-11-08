@@ -7,7 +7,7 @@ import { SERVER_URL } from '../config';
 export default function Controller() {
     const sdkRef = useRef<ControllerSDK | null>(null);
 
-    const [connected] = useState(true);
+    const [connected, setConnected] = useState(false);
     const [joined, setJoined] = useState(false);
     // Prefill room code from QR code URL
     const [roomCode, setRoomCode] = useState(
@@ -22,6 +22,28 @@ export default function Controller() {
     useEffect(() => {
         const sdk = new ControllerSDK(SERVER_URL);
         sdkRef.current = sdk;
+
+        sdk.onConnect(() => {
+            setConnected(true);
+            setFeedback('Connecté au serveur !');
+        });
+
+        sdk.onDisconnect((reason) => {
+            setConnected(false);
+            setFeedback(`Connexion perdue (${reason}). Reconnexion...`);
+        });
+
+        sdk.onPromoteToHost(() => {
+            setFeedback("Tu es maintenant l'hôte du salon !");
+        });
+
+        sdk.onConsoleDisconnected((message) => {
+            setFeedback(`La console s'est déconnecté. Reconnexion... (${message})`);
+        });
+
+        sdk.onConsoleReconnected((message) => {
+            setFeedback(`La console est de retour ! (${message})`);
+        });
 
         return () => {
             sdk.disconnect();
@@ -72,44 +94,8 @@ export default function Controller() {
         }
     }
 
-    const sdk = new ControllerSDK(SOCKET_URL);
-    sdkRef.current = sdk;
-
-    sdk.onConnect(() => {
-      setConnected(true);
-      setFeedback("Connecté au serveur !");
-    }),
-
-    sdk.onDisconnect((reason) => {
-      setConnected(false);
-      setFeedback(`Connexion perdue (${reason}). Reconnexion...`);
-    });
-
-    sdk.onPromoteToHost(() => {
-      setFeedback("Tu es maintenant l'hôte du salon !");
-    });
-
-    sdk.onConsoleDisconnected((message) => {
-      setFeedback(`La console s'est déconnecté. Reconnexion... (${message})`);
-    });
-
-    sdk.onConsoleReconnected((message) => {
-      setFeedback(`La console est de retour ! (${message})`);
-    });
-
-    return () => {
-      sdk.disconnect();
-      sdkRef.current = null;
-    };
-  }, []);
-
-  async function handleJoin(event: any) {
-    event.preventDefault();
-
-    const code = roomCode.trim().toUpperCase();
-    const name = playerName.trim();
-
-    setError("");
+    function handleAction() {
+        if (!sdkRef.current || !joined) return;
 
         // if (sdkRef.current.sendAction) {
         //   sdkRef.current.sendAction({
