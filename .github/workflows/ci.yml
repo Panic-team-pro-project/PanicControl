@@ -1,0 +1,172 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels the run still in progress for it
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  # ESLint and Prettier only need the root dependencies
+  quality:
+    name: Lint and Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: ESLint
+        run: npm run lint -- --max-warnings=0
+      - name: Prettier
+        run: npm run format:check
+
+  tests:
+    name: Tests and Coverage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+            sdk/package-lock.json
+            client_host/package-lock.json
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix server
+          npm ci --prefix sdk
+          npm ci --prefix client_host
+
+      # The SDK comes first: the web app imports its build output
+      - name: Build
+        run: |
+          npm run build --prefix sdk
+          npm run build --prefix server
+          npm run build --prefix client_host
+
+      - name: Unit tests
+        run: npm test
+
+  # Builds and starts the development stack, then checks what it promises
+  dev:
+    name: Development stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      COMPOSE_FILE: compose.dev.yaml
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-compose-action@v2
+        with:
+          version: v5.5.1
+
+      - name: Start the development stack
+        run: |
+          docker compose version
+          if ! docker compose up -d --build --wait --wait-timeout 180; then
+            docker compose logs --no-color
+            exit 1
+          fi
+
+      - name: Check that Vite serves the application and the server accepts connections
+        run: |
+          page=""
+          for _ in $(seq 1 30); do
+            if page=$(curl --fail --silent --max-time 2 http://localhost:5173/) \
+              && curl --fail --silent --max-time 2 http://localhost:3000/ > /dev/null; then
+              break
+            fi
+            page=""
+            sleep 2
+          done
+
+          if [ -z "$page" ]; then
+            echo "the stack never answered"
+            docker compose logs --no-color
+            exit 1
+          fi
+
+          # /@vite/client is only injected by the Vite dev server
+          grep -q '<div id="root">' <<< "$page"
+          grep -q '/@vite/client' <<< "$page"
+
+          # The content type is checked because Vite can answer a missing file with index.html
+          entry=$(grep -o 'src="/src/[^"]*"' <<< "$page" | cut -d'"' -f2)
+          content_type=$(curl --fail --silent --show-error --max-time 30 --write-out '\n%{content_type}' "http://localhost:5173$entry" | tail -n 1)
+          grep -q 'javascript' <<< "$content_type"
+
+          # What the SDK does first when a console or a phone connects
+          handshake=$(curl --fail --silent --show-error --max-time 5 'http://localhost:3000/socket.io/?EIO=4&transport=polling')
+          grep -q '"sid"' <<< "$handshake"
+          echo "Vite serves the page and compiles $entry, and the server accepts Socket.IO connections"
+
+      - name: Check that Compose Watch carries an edit into both containers
+        run: |
+          log="$RUNNER_TEMP/watch.log"
+          docker compose watch --no-up > "$log" 2>&1 &
+          watcher=$!
+          for _ in $(seq 1 60); do
+            grep -qi 'watch enabled' "$log" && break
+            sleep 1
+          done
+
+          echo "compose watch reached the web container" > client_host/public/watch-probe.txt
+          echo "compose watch reached the server container" > server/src/watch-probe.txt
+
+          reached=
+          for _ in $(seq 1 30); do
+            if curl --fail --silent --max-time 2 http://localhost:5173/watch-probe.txt | grep -q 'web container' \
+              && docker compose exec -T server grep -q 'server container' /app/server/src/watch-probe.txt; then
+              reached=1
+              break
+            fi
+            sleep 1
+          done
+
+          kill "$watcher" 2>/dev/null || true
+          rm -f client_host/public/watch-probe.txt server/src/watch-probe.txt
+          if [ -z "$reached" ]; then
+            echo "an edit on the host never reached the containers"
+            cat "$log"
+            exit 1
+          fi
+          echo "an edit on the host reached both containers"
+
+      - name: Check that the stack stops cleanly
+        run: |
+          docker compose stop -t 10
+          for service in web server; do
+            exit_code=$(docker inspect --format '{{.State.ExitCode}}' "$(docker compose ps -a -q "$service")")
+            echo "$service exited with code $exit_code"
+            [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 143 ]
+          done
+
+      - name: Stop the development stack
+        if: always()
+        run: docker compose down -v --remove-orphans

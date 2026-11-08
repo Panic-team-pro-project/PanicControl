@@ -78,6 +78,13 @@ JavaScript when the image is built, so run `docker compose up --build` after cha
 To play with real phones, open the console page with your computer's network address (for example
 `http://192.168.1.20:8080`) instead of `localhost`.
 
+To develop in Docker with live updates, start the development stack instead. It runs the Vite server
+on http://localhost:5173 and sends the files you save into the containers:
+
+```bash
+docker compose -f compose.dev.yaml up --build --watch
+```
+
 ## Run without Docker
 
 ### Install
@@ -158,6 +165,8 @@ request, check the whole project:
    cd client_host && npm run build
    ```
 
+   Then run the unit tests of every package with `npm test` at the repository root.
+
 4. **Try it for real**: create a room on the console page and join it from at least one controller.
    If you changed a Dockerfile or a dependency, also run `docker compose up --build`.
 5. **Check your commits and branch name** follow the [commit rules](docs/COMMIT_RULES.md), and that
@@ -175,8 +184,13 @@ At the repository root:
 | `npm run lint:fix`     | Lint and fix what can be fixed             |
 | `npm run format`       | Format every file with Prettier            |
 | `npm run format:check` | Check formatting without changing anything |
+| `npm test`             | Run the unit tests of every package        |
 
-In each package, `npm run dev` starts it in watch mode and `npm run build` builds it.
+In each package, `npm run dev` starts it in watch mode, `npm run build` builds it and `npm test` runs
+its unit tests. Install each package's dependencies first (see [Install](#install)).
+
+Every pull request into `develop` or `main` runs the same lint, format, build and test checks on
+GitHub Actions (`.github/workflows/ci.yml`).
 
 ## Contributing
 
