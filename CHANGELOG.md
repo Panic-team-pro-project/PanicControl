@@ -20,3 +20,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Lint and formatting (ESLint, Prettier) and Git hooks checking commit messages (Husky, commitlint).
 - Contribution rules, good practice guide, code of conduct, issue and pull request templates.
 - Docker images for the server and the web app, and a Compose file that runs the whole platform.
+- GitHub Actions pipeline running lint, format, build and unit tests on every pull request.
+- Unit tests for the server, SDK and web app (Vitest), run from the repository root with `npm test`.
+- Development stack with Compose Watch (`compose.dev.yaml`), checked on every pull request.
