@@ -41,15 +41,14 @@ export class Room {
         this.updateLastActionTimestamp();
     }
 
-
-
-    getPlayersInfos(): { name: string; playerId: string; isConnected: boolean, isHost: boolean }[] {
-        let players: { name: string; playerId: string; isConnected: boolean, isHost: boolean }[] = this.players.map(player => ({
-            name: player.name,
-            playerId: player.socketId,
-            isConnected: player.isConnected,
-            isHost: player.isHost
-        }));
+    getPlayersInfos(): { name: string; playerId: string; isConnected: boolean; isHost: boolean }[] {
+        const players: { name: string; playerId: string; isConnected: boolean; isHost: boolean }[] =
+            this.players.map((player) => ({
+                name: player.name,
+                playerId: player.socketId,
+                isConnected: player.isConnected,
+                isHost: player.isHost,
+            }));
 
         return players;
     }
