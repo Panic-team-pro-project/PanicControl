@@ -1,185 +1,69 @@
-import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
 import '../css/controller_test_style.css';
-import { ControllerSDK } from 'sdk';
-import { SERVER_URL } from '../config';
+import '../css/controllerMobileRestrictions.css';
+
+import { useController } from '../hooks/useController';
+import { useTouchProtection } from '../hooks/useTouchProtection';
+
+import { ControllerHeader } from '../components/controller/ControllerHeader';
+import { JoinRoomForm } from '../components/controller/JoinRoomForm';
+import { RoomBanner } from '../components/controller/RoomBanner';
+import { WaitingScreen } from '../components/controller/WaitingScreen';
 
 export default function Controller() {
-    const sdkRef = useRef<ControllerSDK | null>(null);
+    useTouchProtection();
+    const {
+        connected,
+        joined,
+        hostStarted,
+        roomCode,
+        setRoomCode,
+        playerName,
+        setPlayerName,
+        displayName,
+        error,
+        feedback,
+        joining,
+        joinRoom,
+        sendAction,
+    } = useController();
 
-    const [connected, setConnected] = useState(false);
-    const [joined, setJoined] = useState(false);
-    // Prefill room code from QR code URL
-    const [roomCode, setRoomCode] = useState(
-        () => new URLSearchParams(window.location.search).get('roomCode')?.toUpperCase() ?? '',
-    );
-    const [playerName, setPlayerName] = useState('');
-    const [displayName, setDisplayName] = useState('');
-    const [error, setError] = useState('');
-    const [feedback, setFeedback] = useState('En attente de connexion...');
-    const [joining, setJoining] = useState(false);
-
-    useEffect(() => {
-        const sdk = new ControllerSDK(SERVER_URL);
-        sdkRef.current = sdk;
-
-        sdk.onConnect(() => {
-            setConnected(true);
-            setFeedback('Connecté au serveur !');
-        });
-
-        sdk.onDisconnect((reason) => {
-            setConnected(false);
-            setFeedback(`Connexion perdue (${reason}). Reconnexion...`);
-        });
-
-        sdk.onPromoteToHost(() => {
-            setFeedback("Tu es maintenant l'hôte du salon !");
-        });
-
-        sdk.onConsoleDisconnected((message) => {
-            setFeedback(`La console s'est déconnecté. Reconnexion... (${message})`);
-        });
-
-        sdk.onConsoleReconnected((message) => {
-            setFeedback(`La console est de retour ! (${message})`);
-        });
-
-        return () => {
-            sdk.disconnect();
-            sdkRef.current = null;
-        };
-    }, []);
-
-    async function handleJoin(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        const code = roomCode.trim().toUpperCase();
-        const name = playerName.trim();
-
-        setError('');
-
-        if (!code || !name) {
-            setError('Remplis le code du salon et ton pseudo.');
-            return;
-        }
-
-        if (!sdkRef.current) {
-            setError("Le SDK n'est pas initialisé.");
-            return;
-        }
-
-        setJoining(true);
-
-        const savedPlayerId = localStorage.getItem('player_id');
-
-        try {
-            const assignedPlayerId = savedPlayerId
-                ? await sdkRef.current.reconnectToRoom(code, name, savedPlayerId)
-                : await sdkRef.current.joinRoom(code, name);
-
-            localStorage.setItem('player_id', assignedPlayerId);
-            setJoined(true);
-            setJoining(false);
-            setRoomCode(code);
-            setDisplayName(name);
-            setFeedback('Manette prête !');
-        } catch (err) {
-            if (savedPlayerId) {
-                localStorage.removeItem('player_id');
-            }
-
-            setJoining(false);
-            setError((err instanceof Error && err.message) || 'Impossible de rejoindre le salon.');
-        }
-    }
+    const gameInfo = {
+        name: 'EpiAirConsole',
+        description: 'Appuie sur le bouton pour dire bonjour.',
+    };
 
     function handleAction() {
-        if (!sdkRef.current || !joined) return;
-
-        // if (sdkRef.current.sendAction) {
-        //   sdkRef.current.sendAction({
-        //     playerId: playerId,
-        //     message: "Le joueur a appuyé sur ACTION !",
-        //   });
-        // }
+        sendAction('Le joueur a appuyé sur ACTION !');
     }
 
     return (
-        <main className="app">
-            <header>
-                <div className="brand">
-                    <div className="logo">🎮</div>
-                    <div>
-                        <h1>EpiAirConsole</h1>
-                        <p className="subtitle">Mobile Controller</p>
-                    </div>
-                </div>
-
-                <div className="status">
-                    <span className={`dot ${connected ? 'online' : ''}`} />
-                    <span>{connected ? 'Connecté' : 'Déconnecté'}</span>
-                </div>
-            </header>
+        <main className="controller-page">
+            <ControllerHeader connected={connected} />
 
             {!joined ? (
-                <section className="card">
-                    <p className="eyebrow">Bienvenue joueur</p>
-                    <h2>Rejoins la partie</h2>
-
-                    <p className="description">
-                        Entre le code affiché sur l'écran de la console pour connecter ta manette.
-                    </p>
-
-                    <form onSubmit={handleJoin}>
-                        <label htmlFor="room-code">Code du salon</label>
-                        <input
-                            id="room-code"
-                            type="text"
-                            placeholder="ABCD"
-                            maxLength={8}
-                            autoComplete="off"
-                            autoCapitalize="characters"
-                            spellCheck={false}
-                            required
-                            value={roomCode}
-                            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                        />
-
-                        <label htmlFor="player-name">Ton pseudo</label>
-                        <input
-                            id="player-name"
-                            type="text"
-                            placeholder="Ex. Luigi"
-                            maxLength={15}
-                            autoComplete="nickname"
-                            required
-                            value={playerName}
-                            onChange={(e) => setPlayerName(e.target.value)}
-                        />
-
-                        <button className="primary-button" type="submit" disabled={joining}>
-                            {joining ? 'Connexion...' : 'Rejoindre la partie →'}
-                        </button>
-
-                        <div className="error" role="alert">
-                            {error}
-                        </div>
-                    </form>
-                </section>
+                <JoinRoomForm
+                    roomCode={roomCode}
+                    playerName={playerName}
+                    error={error}
+                    joining={joining}
+                    connected={connected}
+                    onRoomCodeChange={setRoomCode}
+                    onPlayerNameChange={setPlayerName}
+                    onSubmit={joinRoom}
+                />
+            ) : !hostStarted ? (
+                <WaitingScreen
+                    roomCode={roomCode}
+                    displayName={displayName}
+                    connected={connected}
+                />
             ) : (
                 <section>
-                    <div className="room-banner">
-                        <div>
-                            <div className="room-label">Salon connecté</div>
-                            <div>{roomCode}</div>
-                        </div>
-                        <div>{displayName}</div>
-                    </div>
+                    <RoomBanner roomCode={roomCode} displayName={displayName} />
 
                     <div className="controller-panel">
                         <div className="controller-title">
-                            <p>Appuie sur le bouton pour dire bonjour.</p>
+                            <p>{gameInfo.description}</p>
                         </div>
 
                         <button
@@ -194,11 +78,17 @@ export default function Controller() {
                         <p aria-live="polite">
                             {!connected ? 'Connexion perdue. Reconnexion...' : feedback}
                         </p>
+
+                        {error && (
+                            <div className="error" role="alert">
+                                {error}
+                            </div>
+                        )}
                     </div>
                 </section>
             )}
 
-            <footer>EpiAirConsole</footer>
+            <footer>{gameInfo.name}</footer>
         </main>
     );
 }

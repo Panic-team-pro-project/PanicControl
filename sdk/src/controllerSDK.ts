@@ -74,6 +74,28 @@ export class ControllerSDK {
         });
     }
 
+    sendAction(playerId: string, message: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error('Délai dépassé pour envoyer le message.'));
+            }, 5000);
+
+            this.socket.emit(
+                ClientEvents.GAME_INFO,
+                { playerId, message },
+                (response: { success: boolean; error?: string }) => {
+                    clearTimeout(timer);
+
+                    if (response.success) {
+                        resolve();
+                    } else {
+                        reject(new Error(response.error || 'Action refusée.'));
+                    }
+                },
+            );
+        });
+    }
+
     reconnectToRoom(roomCode: string, playerName: string, playerId: string): Promise<string> {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
