@@ -1,0 +1,140 @@
+.game-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    width: 100%;
+    padding: 1.5rem;
+    color: white;
+}
+
+.game-controls-instructions {
+    text-align: center;
+}
+
+.game-controls-instructions h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.game-controls-layout {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 2rem;
+    width: 100%;
+    max-width: 600px;
+}
+
+.joystick-container,
+.action-container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
+}
+
+.joystick-zone {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    touch-action: none;
+    user-select: none;
+}
+
+.joystick-container p,
+.action-container p {
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.joystick-container span,
+.action-container span {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.game-action-button {
+    width: 120px;
+    height: 120px;
+    border: none;
+    border-radius: 50%;
+    background: #ef4444;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 900;
+    box-shadow: 0 6px 0 #991b1b;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition:
+        transform 0.1s,
+        box-shadow 0.1s;
+}
+
+.game-action-button:active {
+    transform: translateY(5px);
+    box-shadow: 0 1px 0 #991b1b;
+}
+
+.game-action-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* General multitouch surface */
+
+.gesture-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 500px;
+    min-height: 130px;
+    padding: 1rem;
+    border: 2px dashed rgba(255, 255, 255, 0.35);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    user-select: none;
+    touch-action: none;
+}
+
+.gesture-zone h3 {
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.gesture-zone p {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    text-align: center;
+}
+
+.gesture-icon {
+    font-size: 1.8rem;
+}
+
+.gesture-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+@media (max-width: 400px) {
+    .game-controls-layout {
+        gap: 0.5rem;
+    }
+
+    .joystick-zone {
+        width: 150px;
+        height: 150px;
+    }
+
+    .game-action-button {
+        width: 95px;
+        height: 95px;
+        font-size: 1rem;
+    }
+}
