@@ -57,11 +57,11 @@ export class ConsoleSDK {
                 resolve(data.roomCode);
             });
 
-            this.socket.once(ClientEvents.ERROR, (error: string) => {
+            this.socket.once(ClientEvents.ERROR, (error: { message: string }) => {
                 clearTimeout(timer);
                 this.socket.off(ClientEvents.ROOM_CREATED);
 
-                reject(new Error(error));
+                reject(new Error(error.message));
             });
 
             this.socket.emit(ServerEvents.CREATE_ROOM);
@@ -85,11 +85,11 @@ export class ConsoleSDK {
                 resolve(data.roomCode);
             });
 
-            this.socket.once(ClientEvents.ERROR, (error: string) => {
+            this.socket.once(ClientEvents.ERROR, (error: { message: string }) => {
                 clearTimeout(timer);
                 this.socket.off(ClientEvents.RECONNECTED_TO_ROOM);
 
-                reject(new Error(error));
+                reject(new Error(error.message));
             });
 
             this.socket.emit(ServerEvents.RECONNECT_TO_ROOM, roomCode);
@@ -109,8 +109,8 @@ export class ConsoleSDK {
     }
 
     onDisconnectedUser(callback: (playerId: string) => void): void {
-        this.socket.on(ClientEvents.DISCONNECTED_USER, (playerId: string) => {
-            callback(playerId);
+        this.socket.on(ClientEvents.DISCONNECTED_USER, (data: { playerId: string }) => {
+            callback(data.playerId);
         });
     }
 

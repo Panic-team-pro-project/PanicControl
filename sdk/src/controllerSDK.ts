@@ -63,11 +63,11 @@ export class ControllerSDK {
                 resolve(data.playerId);
             });
 
-            this.socket.once(ClientEvents.ERROR, (error: string) => {
+            this.socket.once(ClientEvents.ERROR, (error: { message: string }) => {
                 clearTimeout(timer);
                 this.socket.off(ClientEvents.PLAYER_JOINED);
 
-                reject(new Error(error));
+                reject(new Error(error.message));
             });
 
             this.socket.emit(ServerEvents.JOIN_ROOM, roomCode, playerName);
@@ -93,11 +93,11 @@ export class ControllerSDK {
                 resolve(data.playerId);
             });
 
-            this.socket.once(ClientEvents.ERROR, (error: string) => {
+            this.socket.once(ClientEvents.ERROR, (error: { message: string }) => {
                 clearTimeout(timer);
                 this.socket.off(ClientEvents.PLAYER_JOINED);
 
-                reject(new Error(error));
+                reject(new Error(error.message));
             });
 
             this.socket.emit(ServerEvents.JOIN_ROOM, roomCode, playerName, playerId);
