@@ -1,3 +1,4 @@
+import { MAX_PLAYERS_PER_ROOM } from '../config.js';
 import { Player } from './player.js';
 
 export class Room {
@@ -7,12 +8,14 @@ export class Room {
     lastActionTimestamp: number;
     isConnected: boolean = true;
     disconnectTimer?: NodeJS.Timeout | undefined;
+    readonly maxPlayers: number;
 
-    constructor(roomCode: string, roomSocketId: string) {
+    constructor(roomCode: string, roomSocketId: string, maxPlayers: number = MAX_PLAYERS_PER_ROOM) {
         this.roomCode = roomCode;
         this.roomSocketId = roomSocketId;
         this.players = [];
         this.lastActionTimestamp = Date.now();
+        this.maxPlayers = maxPlayers;
     }
 
     resetDisconnectTimer(): void {
@@ -27,8 +30,7 @@ export class Room {
     }
 
     addPlayer(player: Player): boolean {
-        if (this.players.length >= 2) {
-            // 8 players limit
+        if (this.players.length >= this.maxPlayers) {
             return false;
         }
         this.players.push(player);
@@ -45,7 +47,7 @@ export class Room {
         const players: { name: string; playerId: string; isConnected: boolean; isHost: boolean }[] =
             this.players.map((player) => ({
                 name: player.name,
-                playerId: player.socketId,
+                playerId: player.playerId,
                 isConnected: player.isConnected,
                 isHost: player.isHost,
             }));

@@ -1,6 +1,6 @@
 import type { Server, Socket } from 'socket.io';
 import { RoomManager } from './roomManager.js';
-import { generatePlayerId, generateRoomCode } from '../core/utils.js';
+import { generatePlayerId } from '../core/utils.js';
 import { Player } from './player.js';
 import eventsCodes from 'common';
 import { validatePlayerName } from '../core/pseudoFilter.js';
@@ -32,7 +32,7 @@ export class SocketManager {
 
     private handleCreateRoom(socket: Socket): void {
         socket.on(ServerEvents.CREATE_ROOM, () => {
-            const roomCode = generateRoomCode();
+            const roomCode = this.roomManager.generateUniqueRoomCode();
             this.roomManager.createRoom(roomCode, socket.id);
 
             socket.join(roomCode);
