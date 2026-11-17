@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validatePlayerName } from './pseudoFilter.js';
+import { validatePlayerName } from '../../src/core/pseudoFilter.js';
 
 describe('validatePlayerName', () => {
     it('accepts a normal name', () => {

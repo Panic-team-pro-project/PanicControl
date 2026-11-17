@@ -93,6 +93,11 @@ API and database, a small number of end-to-end tests on the critical path. The a
 what happens without integration tests: four route tests that mock everything and cannot
 catch three real defects in the code they cover.
 
+**Tests live in their package's `tests/` folder.** Each package (`server`, `sdk`, `client_host`)
+keeps its tests in a `tests/` folder at its root, with the same subfolders as `src/` and files named
+`<name>.test.ts`: the tests of `server/src/realtime/room.ts` are in
+`server/tests/realtime/room.test.ts`.
+
 **Test behaviour, not implementation.** A test that breaks when you rename a private
 function is a maintenance cost with no benefit.
 
