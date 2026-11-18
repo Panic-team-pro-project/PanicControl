@@ -22,8 +22,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Docker images for the server and the web app, and a Compose file that runs the whole platform.
 - GitHub Actions pipeline running lint, format, build and unit tests on every pull request.
 - Unit tests for the server, SDK and web app (Vitest), run from the repository root with `npm test`.
-- Server tests for rooms, players and room cleanup, and a test of the messages exchanged between the
-  SDK and the server. Known bugs are kept as expected failures (`it.fails`).
+- Server tests for rooms, players, room codes and room cleanup, and tests of the socket connections
+  and messages between the server, the console and the controllers, through the real SDK.
 - Development stack with Compose Watch (`compose.dev.yaml`), checked on every pull request.
 
 ### Fixed

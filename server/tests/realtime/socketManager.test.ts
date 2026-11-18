@@ -1,12 +1,21 @@
-// Message exchange between the SDK and the server: a real Socket.IO server runs the SocketManager,
-// and the real ConsoleSDK and ControllerSDK talk to it, as the web app does.
+// Socket connections and messages between the backend, the console and the controllers:
+// Socket.IO server runs the SocketManager, and the ConsoleSDK and ControllerSDK talk to it
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { Server } from 'socket.io';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConsoleSDK, ControllerSDK } from '../../../sdk/src/index.js';
 import type { PlayerListInfo } from '../../../sdk/src/index.js';
+import { MAX_PLAYERS_PER_ROOM } from '../../src/config.js';
 import { SocketManager } from '../../src/realtime/socketManager.js';
+
+vi.mock('../../src/config.js', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../../src/config.js')>()),
+    MAX_PLAYERS_PER_ROOM: 8,
+}));
+
+// How long the server waits for a disconnected player to come back
+const PLAYER_GRACE_TIME = 30_000;
 
 let io: Server;
 let url: string;
@@ -25,6 +34,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+    vi.useRealTimers();
     for (const client of clients.splice(0)) {
         client.disconnect();
     }
@@ -51,17 +61,63 @@ function watchPlayers(consoleSdk: ConsoleSDK): PlayerListInfo[][] {
     return updates;
 }
 
-describe('messages between the SDK and the server', () => {
-    it('a console creates a room and receives its code', async () => {
+// Number of sockets connected to the server
+function connectedSockets(): number {
+    return io.sockets.sockets.size;
+}
+
+describe('backend ↔ console', () => {
+    it('the console connects to the server, then disconnects', async () => {
+        const consoleSdk = newConsole();
+        const events: string[] = [];
+        consoleSdk.onConnect(() => events.push('connect'));
+        consoleSdk.onDisconnect((reason) => events.push(reason));
+
+        await vi.waitFor(() => {
+            expect(events).toEqual(['connect']);
+            expect(connectedSockets()).toBe(1);
+        });
+
+        consoleSdk.disconnect();
+
+        await vi.waitFor(() => {
+            expect(events).toEqual(['connect', 'io client disconnect']);
+            expect(connectedSockets()).toBe(0);
+        });
+    });
+
+    it('creates a room and receives its code', async () => {
         const consoleSdk = newConsole();
 
         const roomCode = await consoleSdk.createRoom();
 
+        // Room code is 6 characters, excluding I, O, 0 and 1 to avoid confusion
         expect(roomCode).toMatch(/^[A-HJ-NP-Z2-9]{6}$/);
         expect(consoleSdk.roomCode).toBe(roomCode);
     });
+});
 
-    it('a controller joins a room with its code and receives a player ID', async () => {
+describe('backend ↔ controller', () => {
+    it('the controller connects to the server, then disconnects', async () => {
+        const controller = newController();
+        const events: string[] = [];
+        controller.onConnect(() => events.push('connect'));
+        controller.onDisconnect((reason) => events.push(reason));
+
+        await vi.waitFor(() => {
+            expect(events).toEqual(['connect']);
+            expect(connectedSockets()).toBe(1);
+        });
+
+        controller.disconnect();
+
+        await vi.waitFor(() => {
+            expect(events).toEqual(['connect', 'io client disconnect']);
+            expect(connectedSockets()).toBe(0);
+        });
+    });
+
+    it('joins a room with its code and receives a player ID', async () => {
         const roomCode = await newConsole().createRoom();
         const controller = newController();
 
@@ -72,6 +128,33 @@ describe('messages between the SDK and the server', () => {
         expect(controller.playerId).toBe(playerId);
     });
 
+    it('joining an unknown room is refused with the server message', async () => {
+        await expect(newController().joinRoom('NOPE00', 'Mario')).rejects.toThrow('Room not found');
+    });
+
+    it('an invalid player name is refused', async () => {
+        const roomCode = await newConsole().createRoom();
+
+        await expect(newController().joinRoom(roomCode, '   ')).rejects.toThrow();
+    });
+
+    it('a full room refuses the next player', async () => {
+        const roomCode = await newConsole().createRoom();
+
+        // Fill the room up to the limit, all players joining at the same time
+        await Promise.all(
+            Array.from({ length: MAX_PLAYERS_PER_ROOM }, (_, i) =>
+                newController().joinRoom(roomCode, `Player${i + 1}`),
+            ),
+        );
+
+        await expect(newController().joinRoom(roomCode, 'OneTooMany')).rejects.toThrow(
+            'Room is full',
+        );
+    });
+});
+
+describe('console ↔ controller', () => {
     it('the console receives the player list, with the first player as host', async () => {
         const consoleSdk = newConsole();
         const updates = watchPlayers(consoleSdk);
@@ -85,6 +168,21 @@ describe('messages between the SDK and the server', () => {
                 { name: 'Mario', playerId: marioId, isHost: true, isConnected: true },
                 { name: 'Luigi', playerId: luigiId, isHost: false, isConnected: true },
             ]);
+        });
+    });
+
+    it('the console receives the ID of a player who disconnects', async () => {
+        const consoleSdk = newConsole();
+        const disconnectedIds: string[] = [];
+        consoleSdk.onDisconnectedUser((playerId) => disconnectedIds.push(playerId));
+        const roomCode = await consoleSdk.createRoom();
+        const controller = newController();
+        const playerId = await controller.joinRoom(roomCode, 'Mario');
+
+        controller.disconnect();
+
+        await vi.waitFor(() => {
+            expect(disconnectedIds).toEqual([playerId]);
         });
     });
 
@@ -132,50 +230,30 @@ describe('messages between the SDK and the server', () => {
         });
     });
 
-    it('joining an unknown room is refused', async () => {
-        await expect(newController().joinRoom('NOPE00', 'Mario')).rejects.toThrow();
-    });
-
-    it('an invalid player name is refused', async () => {
-        const roomCode = await newConsole().createRoom();
-
-        await expect(newController().joinRoom(roomCode, '   ')).rejects.toThrow();
-    });
-
-    it('a full room refuses the next player', async () => {
-        const roomCode = await newConsole().createRoom();
-
-        let accepted = 0;
-        let refused = false;
-        while (!refused && accepted < 10) {
-            try {
-                await newController().joinRoom(roomCode, `Player${accepted + 1}`);
-                accepted++;
-            } catch {
-                refused = true;
-            }
-        }
-
-        expect(refused).toBe(true);
-        expect(accepted).toBeGreaterThan(0);
-    });
-
-    it('a refusal carries the server message', async () => {
-        await expect(newController().joinRoom('NOPE00', 'Mario')).rejects.toThrow('Room not found');
-    });
-
-    it('the console receives the ID of a player who disconnects', async () => {
+    it('when the host leaves for good, the next player becomes host', async () => {
         const consoleSdk = newConsole();
-        const disconnectedIds: string[] = [];
-        consoleSdk.onDisconnectedUser((playerId) => disconnectedIds.push(playerId));
+        const updates = watchPlayers(consoleSdk);
         const roomCode = await consoleSdk.createRoom();
-        const controller = newController();
-        const playerId = await controller.joinRoom(roomCode, 'Mario');
+        const mario = newController();
+        await mario.joinRoom(roomCode, 'Mario');
+        const luigi = newController();
+        let promoted = false;
+        luigi.onPromoteToHost(() => (promoted = true));
+        await luigi.joinRoom(roomCode, 'Luigi');
 
-        controller.disconnect();
+        // Fake clock, which still moves with real time so the sockets keep working,
+        // and jumps over the server's 30-second wait for Mario to come back
+        vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ['setTimeout', 'clearTimeout'] });
+        mario.disconnect();
+        await vi.waitFor(() => {
+            expect(updates.at(-1)).toMatchObject([{ name: 'Mario', isConnected: false }, {}]);
+        });
+        vi.advanceTimersByTime(PLAYER_GRACE_TIME);
+        vi.useRealTimers();
 
         await vi.waitFor(() => {
-            expect(disconnectedIds).toEqual([playerId]);
+            expect(promoted).toBe(true);
+            expect(updates.at(-1)).toMatchObject([{ name: 'Luigi', isHost: true }]);
         });
     });
 });
