@@ -56,6 +56,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- A player who reconnects under another name is shown with the new name on the console (the name
+  still goes through the filter).
 - Errors from the server reach the user as readable text instead of "[object Object]".
 - The player list sent to the console uses each player's ID instead of their connection ID.
 - The console receives the ID of a player who disconnects instead of an object.

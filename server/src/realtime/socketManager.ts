@@ -386,6 +386,7 @@ export class SocketManager {
     private reconnectPlayer(
         socket: Socket,
         playerId: string,
+        playerName: string,
         players: Player[],
     ): Player | undefined {
         const player = players.find((p) => p.playerId === playerId);
@@ -403,6 +404,7 @@ export class SocketManager {
         console.log(`🔄 Joueur ${player.name} (${socket.id}) s'est reconnecté avec succès.`);
         player.socketId = socket.id;
         player.isConnected = true;
+        player.name = playerName;
         player.resetDisconnectTimer();
 
         return player;
@@ -450,7 +452,7 @@ export class SocketManager {
                 );
                 let player: Player | undefined;
                 if (this.isReconnection(newPlayerId, room.players)) {
-                    player = this.reconnectPlayer(socket, newPlayerId, room.players);
+                    player = this.reconnectPlayer(socket, newPlayerId, playerName, room.players);
                     socket.data.isHost = player?.isHost || false;
                 } else {
                     if (room.players.length === 0) {

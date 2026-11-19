@@ -246,6 +246,52 @@ describe('console ↔ controller', () => {
         });
     });
 
+    it('a player who comes back under another name is shown with the new name', async () => {
+        const consoleSdk = newConsole();
+        const updates = watchPlayers(consoleSdk);
+        const roomCode = await consoleSdk.createRoom();
+        const firstController = newController();
+        const playerId = await firstController.joinRoom(roomCode, 'Mario');
+
+        firstController.disconnect();
+        await vi.waitFor(() => {
+            expect(updates.at(-1)).toMatchObject([{ name: 'Mario', isConnected: false }]);
+        });
+
+        await newController().reconnectToRoom(roomCode, 'Luigi', playerId);
+
+        await vi.waitFor(() => {
+            expect(updates.at(-1)).toEqual([
+                expect.objectContaining({ playerId, name: 'Luigi', isConnected: true }),
+            ]);
+        });
+    });
+
+    it('a reconnection with a refused name is rejected and keeps the previous name', async () => {
+        const consoleSdk = newConsole();
+        const updates = watchPlayers(consoleSdk);
+        const roomCode = await consoleSdk.createRoom();
+        const firstController = newController();
+        const playerId = await firstController.joinRoom(roomCode, 'Mario');
+
+        firstController.disconnect();
+        await vi.waitFor(() => {
+            expect(updates.at(-1)).toMatchObject([{ name: 'Mario', isConnected: false }]);
+        });
+
+        await expect(newController().reconnectToRoom(roomCode, '   ', playerId)).rejects.toThrow(
+            'Invalid player name',
+        );
+        await newController().reconnectToRoom(roomCode, 'Mario', playerId);
+
+        await vi.waitFor(() => {
+            expect(updates.at(-1)).toEqual([
+                expect.objectContaining({ playerId, name: 'Mario', isConnected: true }),
+            ]);
+        });
+        expect(updates.flat().some((player) => player.name !== 'Mario')).toBe(false);
+    });
+
     it('controllers are told when the console leaves and comes back', async () => {
         const firstConsole = newConsole();
         const roomCode = await firstConsole.createRoom();
