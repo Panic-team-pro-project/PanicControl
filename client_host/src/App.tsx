@@ -8,7 +8,7 @@ export default function App() {
         <>
             <header className="navbar">
                 <Link to="/" className="brand">
-                    🎮 EpiAirConsole
+                    🎮 PanicControl
                 </Link>
                 <Link to="/" className="nav-link">
                     Home

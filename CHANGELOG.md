@@ -25,6 +25,34 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Server tests for rooms, players, room codes and room cleanup, and tests of the socket connections
   and messages between the server, the console and the controllers, through the real SDK.
 - Development stack with Compose Watch (`compose.dev.yaml`), checked on every pull request.
+- Games: game packages in `games/<id>/manifest.json`, discovered and validated by the server at
+  startup (`GAMES_DIR`); manifests declare `entry.screen` / `entry.controller` (relative `.html`
+  paths checked at startup; not loaded yet); format documented in `games/README.md` and ADR 0001.
+- Console/Controller: the host's phone drives the game catalogue shown on the screen with a d-pad
+  and starts or stops a game; the server checks host rights and the game's player count.
+- SDK: typed messaging with generics (`ControllerSDK.sendAction` / `ConsoleSDK.onAction`,
+  `ConsoleSDK.broadcast`, `ConsoleSDK.sendToPlayer` for private messages, `ControllerSDK.onMessage`);
+  per-player private role and public status (`setPlayerRole`, `setPlayerStatus`,
+  `onPlayerStateChanged`), kept across reconnection; catalogue and game lifecycle listeners
+  (`onCatalogue`, `onCatalogueSelection`, `onGameStarted`, `onGameStopped`); `PanicControlError`
+  with an error `code` (the server's codes, plus `TIMEOUT` and `BAD_RESPONSE` raised by the SDK).
+- Server: `MAX_MESSAGE_BYTES` setting (default 64 KB) limiting game message size.
+- Web: `VITE_SDK_DEBUG=true` turns on the SDK debug logs on the console and controller pages
+  (`client_host/.env.example`, Docker build argument).
+
+### Changed
+
+- **BREAKING** SDK: constructors take an options object (`new ConsoleSDK({ serverUrl, debug })`,
+  `new ControllerSDK({ serverUrl, playerId, debug })`); no console logs unless `debug` is true.
+- SDK: every `onXxx` method returns an unsubscribe function.
+- **BREAKING** Protocol: `player_joined` now carries `isHost`; `update_players` is sent to the
+  console only and includes `role` and `status`.
+- **BREAKING** Protocol: `disconnected_user` is sent to the console only.
+- Server: reconnecting with the id of a player who is still connected is refused.
+
+### Removed
+
+- **BREAKING** Protocol/SDK: placeholder `game_info` event and `ConsoleSDK.onGameInfo`.
 
 ### Fixed
 

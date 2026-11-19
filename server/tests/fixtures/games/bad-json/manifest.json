@@ -1,0 +1,4 @@
+// not valid JSON: comments are not allowed
+{
+  "id": "bad-json"
+}

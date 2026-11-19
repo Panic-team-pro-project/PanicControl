@@ -23,6 +23,19 @@ describe('Player', () => {
         expect(player.disconnectTimer).toBeUndefined();
     });
 
+    it('starts without role or status, and resets them', () => {
+        const player = new Player('socket-1', 'player-1', 'Mario');
+        expect(player.role).toBeNull();
+        expect(player.status).toBeNull();
+
+        player.role = 'wolf';
+        player.status = 'alive';
+        player.resetGameState();
+
+        expect(player.role).toBeNull();
+        expect(player.status).toBeNull();
+    });
+
     it('can be created as the host', () => {
         expect(new Player('socket-1', 'player-1', 'Mario', true).isHost).toBe(true);
     });

@@ -75,8 +75,8 @@ describe('Room', () => {
         room.players[1]!.isConnected = false;
 
         expect(room.getPlayersInfos()).toMatchObject([
-            { name: 'Player 1', isConnected: true, isHost: true },
-            { name: 'Player 2', isConnected: false, isHost: false },
+            { name: 'Player 1', isConnected: true, isHost: true, role: null, status: null },
+            { name: 'Player 2', isConnected: false, isHost: false, role: null, status: null },
         ]);
     });
 
@@ -101,6 +101,105 @@ describe('Room', () => {
 
     it('has no host to promote when the room is empty', () => {
         expect(new Room('ABC123', 'console-socket').migrateHost()).toBeUndefined();
+    });
+
+    it('starts in the lobby with no selection and no game', () => {
+        const room = new Room('ABC123', 'console-socket');
+
+        expect(room.phase).toBe('lobby');
+        expect(room.selectedGameId).toBeNull();
+        expect(room.game).toBeNull();
+    });
+
+    describe('moveSelection', () => {
+        const ids = ['a', 'b', 'c'];
+
+        it('selects the first game when nothing is selected', () => {
+            const room = new Room('ABC123', 'console-socket');
+
+            expect(room.moveSelection('down', ids)).toBe(true);
+            expect(room.selectedGameId).toBe('a');
+        });
+
+        it('moves to the next and previous games', () => {
+            const room = new Room('ABC123', 'console-socket');
+            room.selectedGameId = 'a';
+
+            expect(room.moveSelection('right', ids)).toBe(true);
+            expect(room.selectedGameId).toBe('b');
+            expect(room.moveSelection('down', ids)).toBe(true);
+            expect(room.selectedGameId).toBe('c');
+            expect(room.moveSelection('up', ids)).toBe(true);
+            expect(room.selectedGameId).toBe('b');
+            expect(room.moveSelection('left', ids)).toBe(true);
+            expect(room.selectedGameId).toBe('a');
+        });
+
+        it('does not wrap around and reports no change at both ends', () => {
+            const room = new Room('ABC123', 'console-socket');
+            room.selectedGameId = 'a';
+            expect(room.moveSelection('up', ids)).toBe(false);
+            expect(room.selectedGameId).toBe('a');
+
+            room.selectedGameId = 'c';
+            expect(room.moveSelection('down', ids)).toBe(false);
+            expect(room.selectedGameId).toBe('c');
+        });
+
+        it('stays empty when there is no game', () => {
+            const room = new Room('ABC123', 'console-socket');
+
+            expect(room.moveSelection('down', [])).toBe(false);
+            expect(room.selectedGameId).toBeNull();
+        });
+    });
+
+    describe('game phase', () => {
+        const manifest = {
+            id: 'color-rush',
+            name: 'Color Rush',
+            version: '1.0.0',
+            minPlayers: 1,
+            maxPlayers: 4,
+            durationMinutes: 5,
+            controllerComponents: ['button' as const],
+            accessibilityFeatures: [],
+            entry: { screen: 'screen.html', controller: 'controller.html' },
+        };
+
+        it('starts a game and resets roles and statuses', () => {
+            const room = new Room('ABC123', 'console-socket');
+            room.addPlayer(makePlayer(1));
+            room.players[0]!.role = 'wolf';
+            room.players[0]!.status = 'alive';
+
+            room.startGame(manifest);
+
+            expect(room.phase).toBe('playing');
+            expect(room.game).toBe(manifest);
+            expect(room.players[0]).toMatchObject({ role: null, status: null });
+        });
+
+        it('stops the game, back to the lobby, and resets roles and statuses', () => {
+            const room = new Room('ABC123', 'console-socket');
+            room.addPlayer(makePlayer(1));
+            room.startGame(manifest);
+            room.players[0]!.role = 'wolf';
+
+            room.stopGame();
+
+            expect(room.phase).toBe('lobby');
+            expect(room.game).toBeNull();
+            expect(room.players[0]?.role).toBeNull();
+        });
+    });
+
+    it('finds a player by player ID', () => {
+        const room = new Room('ABC123', 'console-socket');
+        room.addPlayer(makePlayer(1));
+
+        expect(room.findPlayer('player-1')?.name).toBe('Player 1');
+        expect(room.findPlayer('nobody')).toBeUndefined();
     });
 
     it('cancels its disconnect timer', () => {

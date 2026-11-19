@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 // Server settings, read from the environment. See .env.example for each variable.
 
 export const DEFAULT_MAX_PLAYERS_PER_ROOM = 8;
@@ -26,3 +28,15 @@ export const MAX_PLAYERS_PER_ROOM = readPositiveInteger(
     process.env.MAX_PLAYERS_PER_ROOM,
     DEFAULT_MAX_PLAYERS_PER_ROOM,
 );
+
+export const DEFAULT_MAX_MESSAGE_BYTES = 65536;
+
+// Largest JSON payload (in bytes) accepted for a game action or message
+export const MAX_MESSAGE_BYTES = readPositiveInteger(
+    'MAX_MESSAGE_BYTES',
+    process.env.MAX_MESSAGE_BYTES,
+    DEFAULT_MAX_MESSAGE_BYTES,
+);
+
+// Folder holding the game packages, resolved from the working directory
+export const GAMES_DIR = path.resolve(process.cwd(), process.env.GAMES_DIR || '../games');

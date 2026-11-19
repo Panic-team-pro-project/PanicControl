@@ -2,5 +2,9 @@
   "name": "common",
   "version": "1.0.0",
   "type": "module",
-  "main": "eventsCodes.ts"
+  "main": "eventsCodes.ts",
+  "exports": {
+    ".": "./eventsCodes.ts",
+    "./gameManifest": "./gameManifest.ts"
+  }
 }
