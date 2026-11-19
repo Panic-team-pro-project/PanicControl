@@ -27,6 +27,8 @@ vi.mock('../../src/config.js', async (importOriginal) => ({
 
 // How long the server waits for a disconnected player to come back
 const PLAYER_GRACE_TIME = 30_000;
+// Same for a disconnected console
+const CONSOLE_GRACE_TIME = 30_000;
 
 const { ClientEvents, ServerEvents } = eventsCodes;
 
@@ -178,6 +180,24 @@ describe('backend ↔ controller', () => {
         await expect(newController().joinRoom(roomCode, '   ')).rejects.toThrow();
     });
 
+    it('a join with arguments of the wrong type is refused without breaking the server', async () => {
+        const roomCode = await newConsole().createRoom();
+        const socket = rawIo(url);
+        clients.push(socket);
+        const errors: unknown[] = [];
+        socket.on(ClientEvents.ERROR, (error: unknown) => errors.push(error));
+
+        socket.emit(ServerEvents.JOIN_ROOM, roomCode, 42);
+        socket.emit(ServerEvents.JOIN_ROOM, { code: roomCode }, 'Mario');
+        socket.emit(ServerEvents.JOIN_ROOM, roomCode, 'Mario', 7);
+        socket.emit(ServerEvents.RECONNECT_TO_ROOM, 123);
+
+        await vi.waitFor(() => {
+            expect(errors).toEqual(Array(4).fill({ message: 'Invalid payload' }));
+        });
+        await expect(newController().joinRoom(roomCode, 'Mario')).resolves.toBeTypeOf('string');
+    });
+
     it('a full room refuses the next player', async () => {
         const roomCode = await newConsole().createRoom();
 
@@ -314,6 +334,33 @@ describe('console ↔ controller', () => {
             expect(messages).toEqual(['Console disconnected', 'Console is back online']);
             expect(updates.at(-1)).toMatchObject([{ name: 'Mario' }]);
         });
+    });
+
+    it('a console that leaves twice gets the full wait time the second time', async () => {
+        const firstConsole = newConsole();
+        const roomCode = await firstConsole.createRoom();
+        const controller = newController();
+        const messages: string[] = [];
+        controller.onConsoleDisconnected((message) => messages.push(message));
+        await controller.joinRoom(roomCode, 'Mario');
+
+        vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ['setTimeout', 'clearTimeout'] });
+        firstConsole.disconnect();
+        await vi.waitFor(() => expect(messages).toHaveLength(1));
+        vi.advanceTimersByTime(CONSOLE_GRACE_TIME - 10_000);
+
+        const secondConsole = newConsole();
+        const recovered = collect(secondConsole.onReconnectedToRoom.bind(secondConsole));
+        await expect(secondConsole.reconnectToRoom(roomCode)).resolves.toBe(roomCode);
+        expect(recovered).toEqual([[roomCode]]);
+
+        // The timer of the first disconnection would have fired here
+        secondConsole.disconnect();
+        await vi.waitFor(() => expect(messages).toHaveLength(2));
+        vi.advanceTimersByTime(15_000);
+        vi.useRealTimers();
+
+        await expect(newConsole().reconnectToRoom(roomCode)).resolves.toBe(roomCode);
     });
 
     it('when the host leaves for good, the next player becomes host', async () => {

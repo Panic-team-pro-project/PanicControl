@@ -75,7 +75,11 @@ export class SocketManager {
     }
 
     private handleReconnectToRoom(socket: Socket): void {
-        socket.on(ServerEvents.RECONNECT_TO_ROOM, (roomCode: string) => {
+        socket.on(ServerEvents.RECONNECT_TO_ROOM, (roomCode: unknown) => {
+            if (typeof roomCode !== 'string') {
+                socket.emit(ClientEvents.ERROR, { message: 'Invalid payload' });
+                return;
+            }
             const room = this.roomManager.getRoom(roomCode);
             if (!room) {
                 console.log(`❌ Salon introuvable pour la reconnexion : ${roomCode}`);
@@ -86,6 +90,8 @@ export class SocketManager {
             if (!room.isConnected) {
                 room.roomSocketId = socket.id;
                 room.isConnected = true;
+                // Otherwise the timer of this disconnection could close the room during the next one
+                room.resetDisconnectTimer();
 
                 socket.join(roomCode);
                 socket.data.roomCode = roomCode;
@@ -432,7 +438,15 @@ export class SocketManager {
     private handleJoinRoom(socket: Socket): void {
         socket.on(
             ServerEvents.JOIN_ROOM,
-            (roomCode: string, playerName: string, playerId?: string) => {
+            (roomCode: unknown, playerName: unknown, playerId?: unknown) => {
+                if (
+                    typeof roomCode !== 'string' ||
+                    typeof playerName !== 'string' ||
+                    (playerId !== undefined && typeof playerId !== 'string')
+                ) {
+                    socket.emit(ClientEvents.ERROR, { message: 'Invalid payload' });
+                    return;
+                }
                 const room = this.roomManager.getRoom(roomCode);
                 if (!room) {
                     console.log(`❌ Salon introuvable : ${roomCode}`);

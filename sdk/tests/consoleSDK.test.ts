@@ -266,15 +266,15 @@ describe('ConsoleSDK state and listeners', () => {
         sdk.onUpdatePlayers((list) => players.push(list));
         sdk.onDisconnectedUser((id) => events.push(`gone ${id}`));
         sdk.onRoomClosed((message) => events.push(message));
-        sdk.onReconnectedToRoom((message) => events.push(message));
+        sdk.onReconnectedToRoom((roomCode) => events.push(`back ${roomCode}`));
 
         socket.receive('update_players', []);
         socket.receive('disconnected_user', { playerId: 'p1' });
         socket.receive('room_closed', { message: 'closed' });
-        socket.receive('reconnected_to_room', { message: 'back' });
+        socket.receive('reconnected_to_room', { roomCode: 'ABC234' });
 
         expect(players).toEqual([[]]);
-        expect(events).toEqual(['gone p1', 'closed', 'back']);
+        expect(events).toEqual(['gone p1', 'closed', 'back ABC234']);
     });
 
     it('onAction only fires for its type', () => {

@@ -24,13 +24,14 @@ activity for 15 minutes is closed.
 
 ## Repository layout
 
-| Folder         | Package       | Role                                                                     |
-| -------------- | ------------- | ------------------------------------------------------------------------ |
-| `server/`      | `server`      | Node.js server: rooms, players, name filtering (Express, Socket.IO)      |
-| `sdk/`         | `sdk`         | Client library for games: `ConsoleSDK` (screen), `ControllerSDK` (phone) |
-| `common/`      | `common`      | Socket event names shared by the server and the SDK                      |
-| `client_host/` | `client_host` | React web app: home page, console and controller pages (Vite)            |
-| `docs/`        |               | Team rules: commits, branches, pull requests, good practice              |
+| Folder         | Package       | Role                                                                             |
+| -------------- | ------------- | -------------------------------------------------------------------------------- |
+| `server/`      | `server`      | Node.js server: rooms, players, name filtering (Express, Socket.IO)              |
+| `sdk/`         | `sdk`         | Client library for games: `ConsoleSDK` (screen), `ControllerSDK` (phone)         |
+| `common/`      | `common`      | Socket event names shared by the server and the SDK                              |
+| `client_host/` | `client_host` | React web app: home page, console and controller pages (Vite)                    |
+| `games/`       |               | Game packages (manifest + pages), read by the server at startup                  |
+| `docs/`        |               | Documentation: technical docs, game developer guide, decisions (ADR), team rules |
 
 ## Getting Started
 
@@ -191,6 +192,14 @@ its unit tests. Install each package's dependencies first (see [Install](#instal
 
 Every pull request into `develop` or `main` runs the same lint, format, build and test checks on
 GitHub Actions (`.github/workflows/ci.yml`).
+
+## Documentation
+
+Everything is indexed in [docs/README.md](docs/README.md). Main entry points:
+
+- [Technical documentation](docs/technical/architecture.md): architecture, data model, real-time
+  protocol, server and SDK.
+- [Game developer guide](docs/game-dev/README.md): SDK reference, game manifest, tutorial.
 
 ## Contributing
 

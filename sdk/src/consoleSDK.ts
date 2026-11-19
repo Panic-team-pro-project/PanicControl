@@ -123,10 +123,13 @@ export class ConsoleSDK<A extends object = MessageMap, M extends object = Messag
         return data.roomCode;
     }
 
-    /** Called when this console took its room back. Returns the unsubscribe function. */
-    onReconnectedToRoom(callback: (message: string) => void): () => void {
-        return this.channel.on(ClientEvents.RECONNECTED_TO_ROOM, (data: { message: string }) =>
-            callback(data.message),
+    /**
+     * Called with the room code when this console took its room back.
+     * Returns the unsubscribe function.
+     */
+    onReconnectedToRoom(callback: (roomCode: string) => void): () => void {
+        return this.channel.on(ClientEvents.RECONNECTED_TO_ROOM, (data: { roomCode: string }) =>
+            callback(data.roomCode),
         );
     }
 

@@ -39,6 +39,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Server: `MAX_MESSAGE_BYTES` setting (default 64 KB) limiting game message size.
 - Web: `VITE_SDK_DEBUG=true` turns on the SDK debug logs on the console and controller pages
   (`client_host/.env.example`, Docker build argument).
+- Docs: technical documentation (architecture, data model, real-time protocol, server, SDK architecture) and a game developer guide (SDK reference, manifest, tutorial preview) in `docs/`.
 
 ### Changed
 
@@ -56,6 +57,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- `join_room` and `reconnect_to_room` refuse arguments of the wrong type with `Invalid payload`
+  instead of crashing the handler.
+- A console that disconnects, comes back and disconnects again gets the full 30 seconds the second
+  time: the first timer no longer closes the room early.
+- `ConsoleSDK.onReconnectedToRoom` receives the room code instead of `undefined`.
 - A player who reconnects under another name is shown with the new name on the console (the name
   still goes through the filter).
 - Errors from the server reach the user as readable text instead of "[object Object]".
