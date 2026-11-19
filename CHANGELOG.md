@@ -20,3 +20,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Lint and formatting (ESLint, Prettier) and Git hooks checking commit messages (Husky, commitlint).
 - Contribution rules, good practice guide, code of conduct, issue and pull request templates.
 - Docker images for the server and the web app, and a Compose file that runs the whole platform.
+- GitHub Actions pipeline running lint, format, build and unit tests on every pull request.
+- Unit tests for the server, SDK and web app (Vitest), run from the repository root with `npm test`.
+- Server tests for rooms, players, room codes and room cleanup, and tests of the socket connections
+  and messages between the server, the console and the controllers, through the real SDK.
+- Development stack with Compose Watch (`compose.dev.yaml`), checked on every pull request.
+
+### Fixed
+
+- Errors from the server reach the user as readable text instead of "[object Object]".
+- The player list sent to the console uses each player's ID instead of their connection ID.
+- The console receives the ID of a player who disconnects instead of an object.
+- A room accepts 8 players instead of 2. `MAX_PLAYERS_PER_ROOM` in `server/.env` changes the limit,
+  for example to test a full room.
+- Room codes always have 6 characters, leave out characters that look alike (0, O, 1, I) and are
+  never shared by two open rooms.

@@ -1,4 +1,5 @@
 import { Room } from './room.js';
+import { generateRoomCode } from '../core/utils.js';
 import type { Server } from 'socket.io';
 import eventsCodes from 'common';
 
@@ -40,6 +41,16 @@ export class RoomManager {
                 });
             }
         }
+    }
+
+    // A code that no open room uses, so a new room can never take over an existing one
+    generateUniqueRoomCode(): string {
+        let roomCode = generateRoomCode();
+        while (this.rooms.has(roomCode)) {
+            roomCode = generateRoomCode();
+        }
+
+        return roomCode;
     }
 
     createRoom(roomCode: string, hostSocketId: string): Room {

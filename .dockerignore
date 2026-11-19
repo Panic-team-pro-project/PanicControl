@@ -17,3 +17,7 @@
 .idea
 docs
 *.md
+
+# Tests run in CI, not in the images (a server test imports the SDK, which is not in the server image)
+**/tests
+**/*.test.ts
