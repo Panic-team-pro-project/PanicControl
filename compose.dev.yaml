@@ -32,6 +32,10 @@ services:
         - action: sync
           path: common
           target: /app/common
+        # The catalogue is read at startup: restart the server to pick up new games
+        - action: sync
+          path: games
+          target: /app/games
         - action: rebuild
           path: server/package.json
 
@@ -42,6 +46,9 @@ services:
       target: build
     working_dir: /app/client_host
     command: ['node', 'node_modules/vite/bin/vite.js', '--host', '0.0.0.0']
+    environment:
+      # Vite also reads VITE_ variables from the process environment
+      VITE_SDK_DEBUG: ${VITE_SDK_DEBUG:-}
     ports:
       - '${VITE_PORT:-5173}:5173'
     healthcheck:

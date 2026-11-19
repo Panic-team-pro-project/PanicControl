@@ -1,3 +1,4 @@
+import type { Direction, GameManifest } from 'common/gameManifest';
 import { MAX_PLAYERS_PER_ROOM } from '../config.js';
 import { Player } from './player.js';
 
@@ -9,6 +10,9 @@ export class Room {
     isConnected: boolean = true;
     disconnectTimer?: NodeJS.Timeout | undefined;
     readonly maxPlayers: number;
+    phase: 'lobby' | 'playing' = 'lobby';
+    selectedGameId: string | null = null;
+    game: GameManifest | null = null;
 
     constructor(roomCode: string, roomSocketId: string, maxPlayers: number = MAX_PLAYERS_PER_ROOM) {
         this.roomCode = roomCode;
@@ -43,16 +47,62 @@ export class Room {
         this.updateLastActionTimestamp();
     }
 
-    getPlayersInfos(): { name: string; playerId: string; isConnected: boolean; isHost: boolean }[] {
-        const players: { name: string; playerId: string; isConnected: boolean; isHost: boolean }[] =
-            this.players.map((player) => ({
-                name: player.name,
-                playerId: player.playerId,
-                isConnected: player.isConnected,
-                isHost: player.isHost,
-            }));
+    getPlayersInfos(): {
+        name: string;
+        playerId: string;
+        isConnected: boolean;
+        isHost: boolean;
+        role: string | null;
+        status: string | null;
+    }[] {
+        return this.players.map((player) => ({
+            name: player.name,
+            playerId: player.playerId,
+            isConnected: player.isConnected,
+            isHost: player.isHost,
+            role: player.role,
+            status: player.status,
+        }));
+    }
 
-        return players;
+    findPlayer(playerId: string): Player | undefined {
+        return this.players.find((player) => player.playerId === playerId);
+    }
+
+    moveSelection(direction: Direction, gameIds: string[]): boolean {
+        const first = gameIds[0];
+        if (first === undefined) {
+            return false;
+        }
+
+        const current = this.selectedGameId === null ? -1 : gameIds.indexOf(this.selectedGameId);
+        if (current === -1) {
+            this.selectedGameId = first;
+            return true;
+        }
+
+        const step = direction === 'up' || direction === 'left' ? -1 : 1;
+        const next = gameIds[Math.min(Math.max(current + step, 0), gameIds.length - 1)];
+        if (next === undefined || next === this.selectedGameId) {
+            return false;
+        }
+
+        this.selectedGameId = next;
+        return true;
+    }
+
+    startGame(manifest: GameManifest): void {
+        this.phase = 'playing';
+        this.game = manifest;
+        this.players.forEach((player) => player.resetGameState());
+        this.updateLastActionTimestamp();
+    }
+
+    stopGame(): void {
+        this.phase = 'lobby';
+        this.game = null;
+        this.players.forEach((player) => player.resetGameState());
+        this.updateLastActionTimestamp();
     }
 
     migrateHost(): Player | undefined {

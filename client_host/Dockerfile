@@ -17,8 +17,10 @@ COPY client_host/ client_host/
 # Empty values use the defaults described in client_host/.env.example.
 ARG VITE_SERVER_URL=""
 ARG VITE_PUBLIC_URL=""
+ARG VITE_SDK_DEBUG=""
 ENV VITE_SERVER_URL=${VITE_SERVER_URL} \
-    VITE_PUBLIC_URL=${VITE_PUBLIC_URL}
+    VITE_PUBLIC_URL=${VITE_PUBLIC_URL} \
+    VITE_SDK_DEBUG=${VITE_SDK_DEBUG}
 RUN npm run build --prefix client_host
 
 FROM nginx:1.27-alpine AS runtime

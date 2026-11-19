@@ -5,6 +5,7 @@
 FROM node:22-alpine AS build
 WORKDIR /app/server
 COPY common/ /app/common/
+COPY games/ /app/games/
 COPY server/package.json server/package-lock.json ./
 RUN npm ci
 COPY server/ ./
@@ -15,6 +16,7 @@ ENV NODE_ENV=production \
     PORT=3000
 WORKDIR /app/server
 COPY common/ /app/common/
+COPY games/ /app/games/
 COPY server/package.json server/package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/server/dist ./dist

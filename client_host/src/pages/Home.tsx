@@ -15,7 +15,7 @@ export default function Home() {
     return (
         <section className="page">
             <p className="eyebrow">Le fun</p>
-            <h1>EpiAirConsole</h1>
+            <h1>PanicControl</h1>
             <p className="subtitle">Choisissez un jeu</p>
 
             <div className="game-grid">
