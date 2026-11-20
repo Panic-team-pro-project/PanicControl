@@ -35,6 +35,26 @@ interface GameControlsProps {
     disabled?: boolean;
 }
 
+// NippleJS event types
+interface JoystickEventData {
+    vector: {
+        x: number;
+        y: number;
+    };
+    force: number;
+    direction?: {
+        angle?: string;
+    };
+}
+
+interface JoystickManagerEvents {
+    on(event: 'move', callback: (event: unknown, data: JoystickEventData) => void): this;
+
+    on(event: 'end', callback: () => void): this;
+
+    destroy(): void;
+}
+
 export function GameControls({
     onMove,
     onRelease,
@@ -46,6 +66,7 @@ export function GameControls({
 }: GameControlsProps) {
     const joystickZone = useRef<HTMLDivElement>(null);
 
+    // Keep callbacks up to date
     const callbacks = useRef({
         onMove,
         onRelease,
@@ -64,7 +85,7 @@ export function GameControls({
         };
     }, [onMove, onRelease, onDrag, onPinch, onGestureEnd]);
 
-    // Virtual joystick
+    // Virtual joystick initialization
     useEffect(() => {
         const zone = joystickZone.current;
 
@@ -73,7 +94,10 @@ export function GameControls({
         const manager = nipplejs.create({
             zone,
             mode: 'static',
-            position: { left: '50%', top: '50%' },
+            position: {
+                left: '50%',
+                top: '50%',
+            },
             color: '#ffffff',
             size: 150,
             threshold: 0.1,
@@ -81,7 +105,7 @@ export function GameControls({
             multitouch: false,
             maxNumberOfJoysticks: 1,
             restJoystick: true,
-        });
+        }) as unknown as JoystickManagerEvents;
 
         manager.on('move', (_event, data) => {
             callbacks.current.onMove?.({
@@ -101,8 +125,8 @@ export function GameControls({
         };
     }, [disabled]);
 
-    // General gesture handling
-    const gestureBind = useGesture(
+    // General multitouch gesture handling
+    useGesture(
         {
             onDrag: ({ movement: [x, y], delta: [deltaX, deltaY], active }) => {
                 callbacks.current.onDrag?.({
@@ -131,6 +155,7 @@ export function GameControls({
             },
         },
         {
+            enabled: !disabled,
             drag: {
                 filterTaps: true,
             },
@@ -148,17 +173,20 @@ export function GameControls({
 
     return (
         <section className="game-controls">
+            {/* Instructions */}
             <header className="game-controls-instructions">
                 <h2>À toi de jouer !</h2>
                 <p>Utilise les commandes pour jouer.</p>
             </header>
 
+            {/* Main controls */}
             <div className="game-controls-layout">
                 {/* Analog joystick */}
                 <div className="joystick-container">
                     <div ref={joystickZone} className="joystick-zone" />
 
                     <p>JOYSTICK</p>
+
                     <span>Déplace-toi dans toutes les directions</span>
                 </div>
 
@@ -174,20 +202,29 @@ export function GameControls({
                     </button>
 
                     <p>BOUTON ACTION</p>
+
                     <span>Appuie pour effectuer une action</span>
                 </div>
             </div>
 
-            {/* Multitouch gesture surface */}
+            {/* Multitouch gesture surface
             <div
                 {...gestureBind()}
-                className={`gesture-zone ${disabled ? 'gesture-disabled' : ''}`}
-                style={{ touchAction: 'none' }}
+                className={`gesture-zone ${
+                    disabled ? 'gesture-disabled' : ''
+                }`}
+                style={{
+                    touchAction: 'none',
+                }}
             >
                 <span className="gesture-icon">✋</span>
+
                 <h3>Zone tactile</h3>
-                <p>Glisse avec un doigt ou pince avec deux doigts</p>
-            </div>
+
+                <p>
+                    Glisse avec un doigt ou pince avec deux doigts
+                </p>
+            </div> */}
         </section>
     );
 }

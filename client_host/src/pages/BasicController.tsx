@@ -7,7 +7,6 @@ import { useTouchProtection } from '../hooks/useTouchProtection';
 import { ControllerHeader } from '../components/controller/ControllerHeader';
 import { JoinRoomForm } from '../components/controller/JoinRoomForm';
 import { RoomBanner } from '../components/controller/RoomBanner';
-import { WaitingScreen } from '../components/controller/WaitingScreen';
 import { GameControls } from '../components/controller/JoystickButtons';
 
 export default function Controller() {
@@ -15,7 +14,6 @@ export default function Controller() {
     const {
         connected,
         joined,
-        hostStarted,
         roomCode,
         setRoomCode,
         playerName,
@@ -47,21 +45,13 @@ export default function Controller() {
                     onPlayerNameChange={setPlayerName}
                     onSubmit={joinRoom}
                 />
-            ) : !hostStarted ? (
-                <WaitingScreen
-                    roomCode={roomCode}
-                    displayName={displayName}
-                    connected={connected}
-                />
             ) : (
-                <section>
+                <section className="controller-game">
                     <RoomBanner roomCode={roomCode} displayName={displayName} />
 
                     <GameControls
                         disabled={!connected}
                         onMove={(data) => {
-                            console.log('Joystick movement:', data);
-
                             sendAction(
                                 JSON.stringify({
                                     type: 'MOVE',
