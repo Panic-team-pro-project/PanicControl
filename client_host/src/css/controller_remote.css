@@ -1,0 +1,213 @@
+.controller-page {
+    --remote-bg: #070a08;
+    --remote-panel: #101712;
+    --remote-green: #a3ff4f;
+    --remote-muted: #89948a;
+
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    background:
+        radial-gradient(ellipse at 50% 40%, rgba(99, 201, 44, 0.09), transparent 65%),
+        var(--remote-bg);
+    color: #f1f5ef;
+    font-family: 'Inter', sans-serif;
+}
+
+.remote-screen {
+    width: 100%;
+    max-width: 500px;
+    min-height: calc(100dvh - 40px);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.remote-heading {
+    text-align: center;
+    margin: 45px 0 35px;
+}
+
+.remote-eyebrow {
+    color: var(--remote-green);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.remote-heading h1 {
+    color: #f1f5ef;
+    font-size: 32px;
+    font-weight: 800;
+    margin: 12px 0;
+    letter-spacing: -1px;
+}
+
+.remote-heading p {
+    color: var(--remote-muted);
+    font-size: 13px;
+}
+
+/* CONTROLLER */
+
+.remote-controller {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 25px 0;
+}
+
+.dpad {
+    width: min(310px, 85vw);
+    aspect-ratio: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 10px;
+    padding: 15px;
+    border: 1px solid rgba(163, 255, 79, 0.16);
+    border-radius: 30px;
+    background: rgba(16, 23, 18, 0.85);
+    box-shadow:
+        0 15px 50px rgba(0, 0, 0, 0.35),
+        inset 0 0 30px rgba(163, 255, 79, 0.025);
+}
+
+.remote-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid rgba(163, 255, 79, 0.35);
+    border-radius: 17px;
+    background: #151e18;
+    color: var(--remote-green);
+    font-size: 28px;
+    font-weight: 900;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        background 0.12s ease,
+        transform 0.12s ease,
+        box-shadow 0.12s ease;
+}
+
+.remote-button:active:not(:disabled) {
+    transform: scale(0.92);
+    background: rgba(163, 255, 79, 0.2);
+    box-shadow: 0 0 25px rgba(163, 255, 79, 0.25);
+}
+
+.remote-button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* DIRECTIONAL BUTTONS */
+
+.up {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.down {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+/* CONFIRM BUTTON */
+
+.confirm {
+    grid-column: 2;
+    grid-row: 2;
+    border-radius: 50%;
+    background: var(--remote-green);
+    color: #080b08;
+    font-size: 23px;
+    font-weight: 1000;
+    border: 3px solid rgba(163, 255, 79, 0.35);
+    box-shadow: 0 0 25px rgba(163, 255, 79, 0.15);
+}
+
+.confirm:active:not(:disabled) {
+    background: #c4ff91;
+    box-shadow: 0 0 35px rgba(163, 255, 79, 0.5);
+}
+
+/* CONNECTION STATUS */
+
+.remote-feedback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 30px;
+    color: var(--remote-muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+.remote-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff6464;
+}
+
+.remote-status.online {
+    background: var(--remote-green);
+    box-shadow: 0 0 12px var(--remote-green);
+}
+
+.remote-footer {
+    margin-top: auto;
+    padding: 30px 0 10px;
+    color: #59645a;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+@media (max-width: 380px) {
+    .remote-heading {
+        margin: 30px 0 20px;
+    }
+
+    .remote-heading h1 {
+        font-size: 27px;
+    }
+
+    .dpad {
+        gap: 7px;
+        padding: 10px;
+        border-radius: 23px;
+    }
+
+    .remote-button {
+        border-radius: 13px;
+        font-size: 23px;
+    }
+
+    .confirm {
+        border-radius: 50%;
+        font-size: 19px;
+    }
+}
