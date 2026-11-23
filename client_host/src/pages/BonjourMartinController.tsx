@@ -4,7 +4,6 @@ import '../css/controllerMobileRestrictions.css';
 import { useController } from '../hooks/useController';
 import { useTouchProtection } from '../hooks/useTouchProtection';
 
-import { ControllerHeader } from '../components/controller/ControllerHeader';
 import { JoinRoomForm } from '../components/controller/JoinRoomForm';
 import { RoomBanner } from '../components/controller/RoomBanner';
 import { WaitingScreen } from '../components/controller/WaitingScreen';
@@ -38,8 +37,6 @@ export default function Controller() {
 
     return (
         <main className="controller-page">
-            <ControllerHeader connected={connected} />
-
             {!joined ? (
                 <JoinRoomForm
                     roomCode={roomCode}
@@ -87,8 +84,6 @@ export default function Controller() {
                     </div>
                 </section>
             )}
-
-            <footer>{gameInfo.name}</footer>
         </main>
     );
 }

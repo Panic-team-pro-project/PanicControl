@@ -3,19 +3,11 @@ import Home from './pages/Home';
 import BonjourMartin from './pages/BonjourMartin';
 import BonjourMartinController from './pages/BonjourMartinController';
 import BasicController from './pages/BasicController';
+import EpiAirConsole from './pages/EpiAirConsole';
 
 export default function App() {
     return (
         <>
-            <header className="navbar">
-                <Link to="/" className="brand">
-                    🎮 EpiAirConsole
-                </Link>
-                <Link to="/" className="nav-link">
-                    Home
-                </Link>
-            </header>
-
             <main className="container">
                 <Routes>
                     <Route path="/" element={<Home />} />
@@ -25,6 +17,7 @@ export default function App() {
                         element={<BonjourMartinController />}
                     />
                     <Route path="/basic" element={<BasicController />} />
+                    <Route path="/airconsole" element={<EpiAirConsole />} />
                     <Route
                         path="*"
                         element={
