@@ -48,3 +48,6 @@ vite.config.*.timestamp-*
 .DS_Store
 Thumbs.db
 desktop.ini
+EpiAirConsole_FR.pdf
+.claude/
+*CLAUDE.md

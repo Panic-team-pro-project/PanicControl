@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readPositiveInteger } from '../src/config.js';
 
@@ -44,5 +45,52 @@ describe('MAX_PLAYERS_PER_ROOM', () => {
 
         expect(MAX_PLAYERS_PER_ROOM).toBe(2);
         expect(new Room('ABC123', 'console-socket').maxPlayers).toBe(2);
+    });
+});
+
+describe('MAX_MESSAGE_BYTES', () => {
+    it('is 65536 when the variable is not set', async () => {
+        vi.stubEnv('MAX_MESSAGE_BYTES', '');
+
+        const { MAX_MESSAGE_BYTES } = await import('../src/config.js');
+
+        expect(MAX_MESSAGE_BYTES).toBe(65536);
+    });
+
+    it('comes from the environment', async () => {
+        vi.stubEnv('MAX_MESSAGE_BYTES', '1000');
+
+        const { MAX_MESSAGE_BYTES } = await import('../src/config.js');
+
+        expect(MAX_MESSAGE_BYTES).toBe(1000);
+    });
+
+    it('falls back to the default and warns when the value is invalid', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        vi.stubEnv('MAX_MESSAGE_BYTES', '-5');
+
+        const { MAX_MESSAGE_BYTES } = await import('../src/config.js');
+
+        expect(MAX_MESSAGE_BYTES).toBe(65536);
+        expect(warn).toHaveBeenCalled();
+    });
+});
+
+describe('GAMES_DIR', () => {
+    it('defaults to the games folder next to the server folder, as an absolute path', async () => {
+        vi.stubEnv('GAMES_DIR', '');
+
+        const { GAMES_DIR } = await import('../src/config.js');
+
+        expect(path.isAbsolute(GAMES_DIR)).toBe(true);
+        expect(GAMES_DIR).toBe(path.resolve(process.cwd(), '../games'));
+    });
+
+    it('comes from the environment, resolved from the working directory', async () => {
+        vi.stubEnv('GAMES_DIR', 'custom/games');
+
+        const { GAMES_DIR } = await import('../src/config.js');
+
+        expect(GAMES_DIR).toBe(path.resolve(process.cwd(), 'custom/games'));
     });
 });

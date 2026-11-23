@@ -1,0 +1,11 @@
+{
+  "id": "some-other-id",
+  "name": "Wrong",
+  "version": "1.0.0",
+  "minPlayers": 1,
+  "maxPlayers": 4,
+  "durationMinutes": 5,
+  "controllerComponents": ["button"],
+  "accessibilityFeatures": [],
+  "entry": { "screen": "screen.html", "controller": "controller.html" }
+}

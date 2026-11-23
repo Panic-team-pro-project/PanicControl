@@ -3,21 +3,41 @@ import { Link } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import '../css/bonjour_martin_style.css';
 import { ConsoleSDK } from 'sdk';
-import type { PlayerListInfo } from 'sdk';
-import { PUBLIC_URL, SERVER_URL } from '../config';
+import type { AccessibilityFeature, GameManifest, PlayerListInfo } from 'sdk';
+import { PUBLIC_URL, SDK_DEBUG, SERVER_URL } from '../config';
+
+const FEATURE_LABELS: Record<AccessibilityFeature, string> = {
+    colorBlind: 'Mode daltonien',
+    textSize: 'Taille du texte',
+    slowDown: 'Ralentissement',
+    textToSpeech: 'Lecture à voix haute',
+    subtitles: 'Sous-titres',
+    noFlashing: 'Sans effets clignotants',
+    noVibration: 'Sans vibrations',
+};
+
+function playersLabel(game: GameManifest): string {
+    const unit = (n: number) => (n > 1 ? 'joueurs' : 'joueur');
+    if (game.minPlayers === game.maxPlayers) return `${game.minPlayers} ${unit(game.maxPlayers)}`;
+    return `${game.minPlayers} à ${game.maxPlayers} joueurs`;
+}
 
 export default function BonjourMartin() {
     const [connected, setConnected] = useState(false);
     const [roomCode, setRoomCode] = useState('');
     const [players, setPlayers] = useState<PlayerListInfo[]>([]);
     const [error, setError] = useState('');
-    const [wobble, setWobble] = useState(false);
+    const [games, setGames] = useState<GameManifest[]>([]);
+    const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+    const [runningGame, setRunningGame] = useState<GameManifest | null>(null);
     const [isReconnecting, setIsReconnecting] = useState(false);
+
+    const [announcement, setAnnouncement] = useState('');
 
     const sdkRef = useRef<ConsoleSDK | null>(null);
 
     useEffect(() => {
-        const sdk = new ConsoleSDK(SERVER_URL);
+        const sdk = new ConsoleSDK({ serverUrl: SERVER_URL, debug: SDK_DEBUG });
         sdkRef.current = sdk;
 
         sdk.onConnect(() => {
@@ -38,13 +58,24 @@ export default function BonjourMartin() {
             setPlayers(Array.isArray(updatedPlayers) ? updatedPlayers : []);
         });
 
-        sdk.onGameInfo(() => {
-            setWobble(false);
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    setWobble(true);
-                });
-            });
+        sdk.onCatalogue((catalogue) => {
+            setGames(catalogue.games);
+            setSelectedGameId(catalogue.selectedGameId);
+        });
+
+        sdk.onCatalogueSelection((selectedGame) => {
+            setSelectedGameId(selectedGame?.id ?? null);
+            if (selectedGame) setAnnouncement(`Jeu sélectionné : ${selectedGame.name}`);
+        });
+
+        sdk.onGameStarted((game) => {
+            setRunningGame(game);
+            setAnnouncement(`Partie lancée : ${game.name}`);
+        });
+
+        sdk.onGameStopped(() => {
+            setRunningGame(null);
+            setAnnouncement('Retour au catalogue');
         });
 
         sdk.onRoomClosed((message) => {
@@ -192,8 +223,6 @@ export default function BonjourMartin() {
                             {showMartin && (
                                 <img
                                     id="controllerImage"
-                                    className={wobble ? 'wobble' : ''}
-                                    onAnimationEnd={() => setWobble(false)}
                                     src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTP6pmEf7w2yY2rRwA10Te7leeEus5aiCjXkRm3aObOOA&s=10.png"
                                     alt="Controller"
                                 />
@@ -251,6 +280,73 @@ export default function BonjourMartin() {
                     </ul>
 
                     {error && <div className="error">{error}</div>}
+
+                    <p className="sr-only" aria-live="polite">
+                        {announcement}
+                    </p>
+
+                    {runningGame ? (
+                        <section aria-labelledby="game-running-title" className="bm-catalogue">
+                            <h2 id="game-running-title">Partie : {runningGame.name}</h2>
+                            <p>
+                                Le chargement du jeu arrive bientôt. L'hôte peut quitter la partie
+                                depuis sa manette.
+                            </p>
+                        </section>
+                    ) : (
+                        <section aria-labelledby="catalogue-title" className="bm-catalogue">
+                            <h2 id="catalogue-title">Catalogue des jeux</h2>
+                            <p>
+                                L'hôte choisit le jeu avec la croix de sa manette, puis appuie sur
+                                OK.
+                            </p>
+                            {games.length === 0 ? (
+                                <p>Aucun jeu installé pour le moment.</p>
+                            ) : (
+                                <ul className="bm-game-list">
+                                    {games.map((game) => {
+                                        const isSelected = game.id === selectedGameId;
+                                        return (
+                                            <li
+                                                key={game.id}
+                                                className={
+                                                    isSelected
+                                                        ? 'bm-game-card bm-game-card-selected'
+                                                        : 'bm-game-card'
+                                                }
+                                                aria-current={isSelected ? 'true' : undefined}
+                                            >
+                                                <h3>{game.name}</h3>
+                                                {isSelected && (
+                                                    <span className="bm-selected-badge">
+                                                        Sélectionné
+                                                    </span>
+                                                )}
+                                                <p>
+                                                    {playersLabel(game)} · ≈ {game.durationMinutes}{' '}
+                                                    min
+                                                </p>
+                                                {game.description && <p>{game.description}</p>}
+                                                {game.accessibilityFeatures.length === 0 ? (
+                                                    <p>Aucune option d'accessibilité déclarée</p>
+                                                ) : (
+                                                    <ul className="bm-feature-list">
+                                                        {game.accessibilityFeatures.map(
+                                                            (feature) => (
+                                                                <li key={feature}>
+                                                                    {FEATURE_LABELS[feature]}
+                                                                </li>
+                                                            ),
+                                                        )}
+                                                    </ul>
+                                                )}
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            )}
+                        </section>
+                    )}
                 </section>
             )}
         </main>

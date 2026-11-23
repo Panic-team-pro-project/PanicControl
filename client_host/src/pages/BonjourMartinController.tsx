@@ -1,8 +1,49 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import '../css/controller_test_style.css';
-import { ControllerSDK } from 'sdk';
-import { SERVER_URL } from '../config';
+import { ControllerSDK, PanicControlError } from 'sdk';
+import type { GameManifest } from 'sdk';
+import { SDK_DEBUG, SERVER_URL } from '../config';
+
+type Direction = 'up' | 'down' | 'left' | 'right';
+
+/** Server refusal when reconnecting with the id of a player whose previous socket is still alive. */
+const PLAYER_ALREADY_CONNECTED = 'This player is already connected.';
+
+const DPAD: { direction: Direction; label: string; glyph: string }[] = [
+    { direction: 'up', label: 'Haut', glyph: '▲' },
+    { direction: 'left', label: 'Gauche', glyph: '◀' },
+    { direction: 'right', label: 'Droite', glyph: '▶' },
+    { direction: 'down', label: 'Bas', glyph: '▼' },
+];
+
+function playerNoun(n: number): string {
+    return n > 1 ? 'joueurs' : 'joueur';
+}
+
+function actionErrorMessage(err: unknown, selectedGame: GameManifest | null): string {
+    if (err instanceof PanicControlError) {
+        switch (err.code) {
+            case 'NOT_ENOUGH_PLAYERS':
+                if (!selectedGame) return 'Il faut plus de joueurs pour ce jeu.';
+                return `Il faut au moins ${selectedGame.minPlayers} ${playerNoun(selectedGame.minPlayers)} pour ce jeu.`;
+            case 'TOO_MANY_PLAYERS':
+                if (!selectedGame) return 'Il y a trop de joueurs pour ce jeu.';
+                return `Ce jeu accepte ${selectedGame.maxPlayers} ${playerNoun(selectedGame.maxPlayers)} au maximum.`;
+            case 'NO_GAME_SELECTED':
+                return 'Aucun jeu sélectionné.';
+            case 'NOT_HOST':
+                return "Seul l'hôte peut lancer ou quitter une partie.";
+            case 'GAME_ALREADY_RUNNING':
+                return 'Une partie est déjà en cours.';
+            case 'NO_GAME_RUNNING':
+                return 'Aucune partie en cours.';
+            case 'TIMEOUT':
+                return 'Le serveur ne répond pas. Réessaie dans un instant.';
+        }
+    }
+    return 'Une erreur est survenue. Réessaie.';
+}
 
 export default function Controller() {
     const sdkRef = useRef<ControllerSDK | null>(null);
@@ -18,9 +59,14 @@ export default function Controller() {
     const [error, setError] = useState('');
     const [feedback, setFeedback] = useState('En attente de connexion...');
     const [joining, setJoining] = useState(false);
+    const [isHost, setIsHost] = useState(false);
+    const [selectedGame, setSelectedGame] = useState<GameManifest | null>(null);
+    const [game, setGame] = useState<GameManifest | null>(null);
+    const [actionError, setActionError] = useState('');
+    const [pending, setPending] = useState(false);
 
     useEffect(() => {
-        const sdk = new ControllerSDK(SERVER_URL);
+        const sdk = new ControllerSDK({ serverUrl: SERVER_URL, debug: SDK_DEBUG });
         sdkRef.current = sdk;
 
         sdk.onConnect(() => {
@@ -34,7 +80,21 @@ export default function Controller() {
         });
 
         sdk.onPromoteToHost(() => {
+            setIsHost(true);
             setFeedback("Tu es maintenant l'hôte du salon !");
+        });
+
+        sdk.onCatalogueSelection((selection) => {
+            setSelectedGame(selection);
+            setActionError('');
+        });
+
+        sdk.onGameStarted((started) => {
+            setGame(started);
+        });
+
+        sdk.onGameStopped(() => {
+            setGame(null);
         });
 
         sdk.onConsoleDisconnected((message) => {
@@ -80,29 +140,50 @@ export default function Controller() {
 
             localStorage.setItem('player_id', assignedPlayerId);
             setJoined(true);
+            setIsHost(sdkRef.current.isHost);
             setJoining(false);
             setRoomCode(code);
             setDisplayName(name);
             setFeedback('Manette prête !');
         } catch (err) {
+            setJoining(false);
+
+            // The server still sees our previous connection (e.g. after a network switch):
+            // keep the saved id so the player can get their seat back once it is released.
+            if (err instanceof Error && err.message === PLAYER_ALREADY_CONNECTED) {
+                setError('Ta place est encore active. Réessaie dans quelques secondes.');
+                return;
+            }
+
             if (savedPlayerId) {
                 localStorage.removeItem('player_id');
             }
 
-            setJoining(false);
             setError((err instanceof Error && err.message) || 'Impossible de rejoindre le salon.');
         }
     }
 
-    function handleAction() {
-        if (!sdkRef.current || !joined) return;
+    function handleNavigate(direction: Direction) {
+        sdkRef.current?.navigateCatalogue(direction);
+    }
 
-        // if (sdkRef.current.sendAction) {
-        //   sdkRef.current.sendAction({
-        //     playerId: playerId,
-        //     message: "Le joueur a appuyé sur ACTION !",
-        //   });
-        // }
+    async function runAction(action: 'start' | 'stop') {
+        const sdk = sdkRef.current;
+        if (!sdk || pending) return;
+
+        setPending(true);
+        try {
+            if (action === 'start') {
+                await sdk.startGame();
+            } else {
+                await sdk.stopGame();
+            }
+            setActionError('');
+        } catch (err) {
+            setActionError(actionErrorMessage(err, selectedGame));
+        } finally {
+            setPending(false);
+        }
     }
 
     return (
@@ -111,7 +192,7 @@ export default function Controller() {
                 <div className="brand">
                     <div className="logo">🎮</div>
                     <div>
-                        <h1>EpiAirConsole</h1>
+                        <h1>PanicControl</h1>
                         <p className="subtitle">Mobile Controller</p>
                     </div>
                 </div>
@@ -178,18 +259,68 @@ export default function Controller() {
                     </div>
 
                     <div className="controller-panel">
-                        <div className="controller-title">
-                            <p>Appuie sur le bouton pour dire bonjour.</p>
-                        </div>
+                        <p className="sr-only" aria-live="polite">
+                            {game
+                                ? `Partie lancée : ${game.name}`
+                                : selectedGame
+                                  ? `Jeu sélectionné : ${selectedGame.name}`
+                                  : ''}
+                        </p>
+                        {game ? (
+                            <>
+                                <h2 className="controller-heading">
+                                    Partie en cours : {game.name}
+                                </h2>
+                                {isHost && (
+                                    <button
+                                        className="primary-button action-wide"
+                                        type="button"
+                                        disabled={pending}
+                                        onClick={() => runAction('stop')}
+                                    >
+                                        {pending ? 'Un instant…' : 'Quitter la partie'}
+                                    </button>
+                                )}
+                            </>
+                        ) : isHost ? (
+                            <>
+                                <p className="selected-game">
+                                    {selectedGame
+                                        ? `Jeu sélectionné : ${selectedGame.name}`
+                                        : 'Aucun jeu disponible'}
+                                </p>
+                                <div className="dpad" role="group" aria-label="Choix du jeu">
+                                    {DPAD.map(({ direction, label, glyph }) => (
+                                        <button
+                                            key={direction}
+                                            type="button"
+                                            className={`dpad-button dpad-${direction}`}
+                                            aria-label={label}
+                                            onClick={() => handleNavigate(direction)}
+                                        >
+                                            <span aria-hidden="true">{glyph}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    className="primary-button action-wide"
+                                    type="button"
+                                    disabled={pending || !selectedGame}
+                                    onClick={() => runAction('start')}
+                                >
+                                    {pending ? 'Lancement…' : 'OK — Lancer le jeu'}
+                                </button>
+                            </>
+                        ) : (
+                            <p className="selected-game">
+                                L'hôte choisit un jeu…
+                                {selectedGame ? ` Jeu sélectionné : ${selectedGame.name}` : ''}
+                            </p>
+                        )}
 
-                        <button
-                            id="action-button"
-                            type="button"
-                            disabled={!connected}
-                            onClick={handleAction}
-                        >
-                            <span>Bonjour :D</span>
-                        </button>
+                        <p role="alert" className="error">
+                            {actionError}
+                        </p>
 
                         <p aria-live="polite">
                             {!connected ? 'Connexion perdue. Reconnexion...' : feedback}
@@ -198,7 +329,7 @@ export default function Controller() {
                 </section>
             )}
 
-            <footer>EpiAirConsole</footer>
+            <footer>PanicControl</footer>
         </main>
     );
 }
