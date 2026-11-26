@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { SubmitEvent } from 'react';
 import '../css/controller_test_style.css';
 import { ControllerSDK, PanicControlError } from 'sdk';
 import type { GameManifest } from 'sdk';
@@ -111,7 +111,7 @@ export default function Controller() {
         };
     }, []);
 
-    async function handleJoin(event: FormEvent<HTMLFormElement>) {
+    async function handleJoin(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
 
         const code = roomCode.trim().toUpperCase();

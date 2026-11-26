@@ -1,0 +1,279 @@
+.devtools {
+    --devtools-ok: #16a34a;
+    --devtools-error: #dc2626;
+
+    font: 14px/1.4 var(--sans);
+    color: var(--text);
+}
+
+.devtools button {
+    padding: 8px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.devtools button:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.devtools button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.devtools button:focus-visible,
+.devtools input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.devtools .devtools-secondary {
+    border-color: var(--border);
+    background: transparent;
+    color: var(--text-h);
+}
+
+.devtools input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text-h);
+    font: inherit;
+}
+
+.devtools strong {
+    color: var(--text-h);
+}
+
+.devtools-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Floating button */
+.devtools .devtools-launcher {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+}
+
+.devtools-count {
+    min-width: 1.4em;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--accent);
+    font-size: 0.85em;
+    font-weight: bold;
+    text-align: center;
+}
+
+.devtools-dialog {
+    position: fixed;
+    inset: auto 16px 72px auto;
+    z-index: 1001;
+    display: none;
+    flex-direction: column;
+    width: min(380px, calc(100vw - 16px));
+    max-height: min(70vh, 560px);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--accent-border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(6px);
+}
+
+.devtools-dialog[open] {
+    display: flex;
+}
+
+.devtools-dialog.devtools-placed {
+    inset: auto;
+}
+
+.devtools-header {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.devtools-header:active {
+    cursor: grabbing;
+}
+
+.devtools-header h2 {
+    flex: 1;
+    margin: 0;
+    color: var(--text-h);
+    font-size: 0.95rem;
+}
+
+.devtools .devtools-handle,
+.devtools .devtools-close {
+    padding: 2px 8px;
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-h);
+}
+
+.devtools .devtools-handle {
+    cursor: grab;
+}
+
+.devtools .devtools-close:hover {
+    border-color: var(--border);
+}
+
+.devtools-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+.devtools-content h3 {
+    margin: 0 0 8px;
+    color: var(--text-h);
+    font-size: 0.95rem;
+}
+
+.devtools-hint,
+.devtools-note,
+.devtools-empty {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.devtools-hint {
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+/* Simulator */
+.devtools-simulator {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.devtools-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.devtools-field {
+    display: flex;
+    flex: 1 1 140px;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+}
+
+.devtools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.devtools-phone {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--code-bg) 80%, transparent);
+}
+
+.devtools-phase-joined {
+    border-color: var(--accent-border);
+}
+
+.devtools-phase-failed {
+    border-color: var(--devtools-error);
+}
+
+.devtools-phone-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.devtools-host {
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #ffd700;
+    color: #000;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.devtools-status {
+    margin-left: auto;
+    font-size: 0.85rem;
+}
+
+.devtools-online {
+    color: var(--devtools-ok);
+}
+
+.devtools-error {
+    margin: 0;
+    color: var(--devtools-error);
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.devtools-phone-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: auto;
+}
+
+.devtools .devtools-phone-actions button {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+    .devtools-grid {
+        grid-template-columns: 1fr;
+    }
+}

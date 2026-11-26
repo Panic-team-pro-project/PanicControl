@@ -2,10 +2,11 @@ import { Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import BonjourMartin from './pages/BonjourMartin';
 import BonjourMartinController from './pages/BonjourMartinController';
+import DevToolsProvider from './devtools/DevToolsProvider';
 
 export default function App() {
     return (
-        <>
+        <DevToolsProvider>
             <header className="navbar">
                 <Link to="/" className="brand">
                     🎮 PanicControl
@@ -36,6 +37,6 @@ export default function App() {
                     />
                 </Routes>
             </main>
-        </>
+        </DevToolsProvider>
     );
 }

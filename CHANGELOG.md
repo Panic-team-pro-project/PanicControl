@@ -39,6 +39,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Server: `MAX_MESSAGE_BYTES` setting (default 64 KB) limiting game message size.
 - Web: `VITE_SDK_DEBUG=true` turns on the SDK debug logs on the console and controller pages
   (`client_host/.env.example`, Docker build argument).
+- Web: developer mode, to test a game without phones. `?debug` or Ctrl+Shift+D turns it on, in
+  development and production builds. A 🛠 Dev button opens a small see-through window that can be
+  dragged anywhere on the screen, on every page. Its virtual controllers join a room like phones:
+  each one is a real `ControllerSDK`, so the server applies the same rules (player limit, host,
+  reconnection), and they stay connected across pages.
 - Docs: technical documentation (architecture, data model, real-time protocol, server, SDK architecture) and a game developer guide (SDK reference, manifest, tutorial preview) in `docs/`.
 
 ### Changed

@@ -262,5 +262,5 @@ Also exported: `SdkErrorCode`, `ErrorCode`, `AccessibilityFeature`, `ControllerC
 - Controller components rendered by the platform, vibration, sensors (with iOS permission and touch
   fallback).
 - Reading the player's accessibility options from the SDK.
-- Developer mode: controller simulator, message log, latency.
+- Developer mode: message log, latency.
 - Pause, turns, scores, achievements and end screen helpers.

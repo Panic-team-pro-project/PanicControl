@@ -56,6 +56,7 @@ back.
 - [SDK reference](sdk-reference.md): every method, type, error and limit.
 - [Manifest reference](manifest.md): describe your game package.
 - [Tutorial](tutorial.md): from an empty folder to a small multiplayer game.
+- [Testing without phones](testing-without-phones.md): developer mode and virtual controllers.
 - Technical background: [SDK architecture](../technical/sdk-architecture.md),
   [realtime protocol](../technical/realtime-protocol.md),
   [ADR 0001, game packages and launch](../adr/0001-game-packages-and-launch.md).
@@ -67,5 +68,5 @@ back.
 - Controller layouts rendered from the declared components.
 - Vibration, and sensors with the iOS permission prompt and a touch fallback.
 - Accessibility options readable by games.
-- Developer mode: controller simulator, message log, latency display.
+- Developer mode: driving the game from the virtual controllers, message log, latency display.
 - Game lifecycle beyond start and stop: pause, turns, scores, achievements, end screen.

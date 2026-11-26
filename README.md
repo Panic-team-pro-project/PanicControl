@@ -139,6 +139,12 @@ Phones must reach your computer over the local network:
    find the server on the same host, port 3000.
 3. Phones and computer must be on the same Wi-Fi network, and the firewall must allow ports 3000 and 5173.
 
+### Test without phones
+
+Add `?debug` to the address, or press Ctrl+Shift+D, to turn on developer mode: a 🛠 Dev button opens
+an overlay where virtual controllers join a room like phones. See
+[Testing without phones](docs/game-dev/testing-without-phones.md).
+
 ## Before you push
 
 The Git hooks check each commit, but only the files in it. Before pushing a branch or opening a pull

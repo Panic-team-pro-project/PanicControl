@@ -19,6 +19,7 @@ For someone taking over the project.
 - [SDK reference](game-dev/sdk-reference.md)
 - [Game manifest](game-dev/manifest.md)
 - [Tutorial](game-dev/tutorial.md)
+- [Testing without phones](game-dev/testing-without-phones.md)
 
 ## Decisions
 
