@@ -43,7 +43,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   development and production builds. A 🛠 Dev button opens a small see-through window that can be
   dragged anywhere on the screen, on every page. Its virtual controllers join a room like phones:
   each one is a real `ControllerSDK`, so the server applies the same rules (player limit, host,
-  reconnection), and they stay connected across pages.
+  reconnection), and they stay connected across pages. They drive the catalogue and the game with
+  the same controls as the phone page, show the player's role and status, and send game actions.
 - Docs: technical documentation (architecture, data model, real-time protocol, server, SDK architecture) and a game developer guide (SDK reference, manifest, tutorial preview) in `docs/`.
 
 ### Changed
@@ -55,6 +56,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   console only and includes `role` and `status`.
 - **BREAKING** Protocol: `disconnected_user` is sent to the console only.
 - Server: reconnecting with the id of a player who is still connected is refused.
+- Web: the phone controller page's in-room controls (d-pad, start and stop, waiting text, French
+  refusal messages) are a shared component, also used by developer mode's virtual controllers.
 
 ### Removed
 

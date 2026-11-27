@@ -201,5 +201,5 @@ regions so a screen reader announces them, and the vote does not depend on colou
 
 - Loading and running your pages in the platform.
 - Scores, turns, pause, achievements and an end screen provided by the platform.
-- Driving the game from virtual controllers, and a message log. Virtual controllers can already
-  join a room: see [Testing without phones](testing-without-phones.md).
+- A message log. Virtual controllers can already join a room and drive the game: see
+  [Testing without phones](testing-without-phones.md).

@@ -66,7 +66,36 @@ when the field is empty. Each controller gets a box showing:
 
 Virtual controllers live in the browser tab: they disappear when you reload the page.
 
+## Driving the game
+
+Once a controller has joined, its box shows **the same controls as the phone controller page**,
+from the same component, so they behave exactly the same:
+
+| Room phase   | Host                                                                            | Other players                                  |
+| ------------ | ------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Lobby        | The selected game, the d-pad to move in the catalogue, and "OK — Lancer le jeu" | "L'hôte choisit un jeu…" and the selected game |
+| Game running | "Partie en cours" and "Quitter la partie"                                       | "Partie en cours"                              |
+
+A refusal shows the same French message as on a phone, for example "Il faut au moins 2 joueurs
+pour ce jeu."
+
+The catalogue lists the games of the server's `GAMES_DIR` folder. The root `games/` folder has no
+game yet; to try the controls, start the server with the sample games of the tests:
+
+```
+GAMES_DIR=tests/fixtures/games
+```
+
+in `server/.env`. The server skips the sample packages that are broken on purpose, with a warning.
+
+Two helpers exist only in the boxes, for developers:
+
+- **Role and status**: the player's secret role and status, when the screen sets them.
+- **Sending an action**, while a game runs: type an action name, such as `jump`, and optional JSON
+  data, such as `{ "x": 1 }`, then "Envoyer l'action". The screen receives it with
+  `onAction('jump', ...)`, from this player. The last 5 action names stay as buttons, to send them
+  again without data.
+
 ## Coming next
 
-- Driving the catalogue and the game from the boxes: d-pad, start and stop, sending actions.
-- A log of the messages exchanged in the room.
+- A log of the messages exchanged in the room, and the messages each box receives.
