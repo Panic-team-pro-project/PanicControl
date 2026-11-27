@@ -202,7 +202,7 @@
 
 .devtools-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     gap: 12px;
     margin: 0;
     padding: 0;
@@ -276,4 +276,66 @@
     .devtools-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Controls of a joined box: the phone's own controls (ControllerControls, styled by
+   controller_test_style.css), made to fit a box */
+.devtools-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.devtools-controls .controller-heading,
+.devtools-controls .selected-game {
+    margin: 0;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.devtools-controls .dpad {
+    grid-template-columns: repeat(3, 2.5rem);
+    grid-template-rows: repeat(3, 2.5rem);
+    gap: 4px;
+}
+
+.devtools .devtools-controls .dpad-button {
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border-radius: 10px;
+    font-size: 1rem;
+}
+
+.devtools-controls .action-wide {
+    width: 100%;
+}
+
+.devtools-controls .error:empty {
+    display: none;
+}
+
+.devtools-controls .error {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.devtools-action-form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    font-size: 0.8rem;
+}
+
+.devtools-recent {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.devtools .devtools-recent button {
+    padding: 2px 8px;
+    font-size: 0.8rem;
 }

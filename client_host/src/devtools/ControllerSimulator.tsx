@@ -1,16 +1,13 @@
-// Phone-like boxes, one per virtual controller (issue #59). Each box is a real ControllerSDK
-// that joined a room, so it appears in the console's player list like a phone.
 import { useState } from 'react';
 import type { SubmitEvent } from 'react';
 import { useDevTools } from './devToolsContext';
 import { PHASE_LABELS, nextBotName, normalizeRoomCode } from './virtualControllers';
 import type { VirtualController } from './virtualControllers';
+import VirtualGameControls from './VirtualGameControls';
 
 export default function ControllerSimulator() {
     const { consoleRoom, simulator } = useDevTools();
     const { controllers, add, removeAll } = simulator;
-    // Filled with the page's room, and again each time the page gets a new one. It can be
-    // changed to join any other room.
     const [roomInput, setRoomInput] = useState(consoleRoom ?? '');
     const [seenConsoleRoom, setSeenConsoleRoom] = useState(consoleRoom);
     if (consoleRoom !== seenConsoleRoom) {
@@ -99,7 +96,7 @@ export default function ControllerSimulator() {
 
 function VirtualPhone({ controller }: { controller: VirtualController }) {
     const { simulator } = useDevTools();
-    const { id, name, roomCode, phase, connected, isHost, consoleOnline, error, playerId } =
+    const { id, name, roomCode, phase, connected, isHost, consoleOnline, error, playerId, sdk } =
         controller;
     const online = phase === 'joined' && connected;
 
@@ -126,6 +123,8 @@ function VirtualPhone({ controller }: { controller: VirtualController }) {
                     {error}
                 </p>
             )}
+
+            {online && sdk && <VirtualGameControls sdk={sdk} id={id} />}
 
             <div className="devtools-phone-actions">
                 {phase === 'joined' && (

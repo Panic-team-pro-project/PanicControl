@@ -18,6 +18,7 @@ describe('newController', () => {
             isHost: false,
             consoleOnline: true,
             error: '',
+            sdk: null,
         });
     });
 });

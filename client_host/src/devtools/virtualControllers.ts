@@ -1,4 +1,4 @@
-// State of a virtual controller: pure helpers, testable without a browser.
+import type { ControllerSDK } from 'sdk';
 
 export type ControllerPhase = 'joining' | 'joined' | 'offline' | 'failed';
 
@@ -12,6 +12,7 @@ export interface VirtualController {
     isHost: boolean;
     consoleOnline: boolean;
     error: string;
+    sdk: ControllerSDK | null;
 }
 
 export const PHASE_LABELS: Record<ControllerPhase, string> = {
@@ -32,6 +33,7 @@ export function newController(id: number, name: string, roomCode: string): Virtu
         isHost: false,
         consoleOnline: true,
         error: '',
+        sdk: null,
     };
 }
 

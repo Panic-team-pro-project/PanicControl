@@ -1,6 +1,3 @@
-// Virtual controllers of developer mode. Each one is a real ControllerSDK connected to the
-// server, exactly like a phone, so the server applies the same rules to it: player limit, host,
-// reconnection.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ControllerSDK } from 'sdk';
 import { SDK_DEBUG, SERVER_URL } from '../config';
@@ -18,7 +15,6 @@ export interface VirtualControllers {
 
 export function useVirtualControllers(): VirtualControllers {
     const [controllers, setControllers] = useState<VirtualController[]>([]);
-    // The live connection of each controller. Kept out of the React state: it is not displayed.
     const sdks = useRef(new Map<number, ControllerSDK>());
     const nextId = useRef(1);
 
@@ -26,12 +22,15 @@ export function useVirtualControllers(): VirtualControllers {
         setControllers((list) => list.map((c) => (c.id === id ? { ...c, ...patch } : c)));
     }, []);
 
-    const close = useCallback((id: number) => {
-        sdks.current.get(id)?.disconnect();
-        sdks.current.delete(id);
-    }, []);
+    const close = useCallback(
+        (id: number) => {
+            sdks.current.get(id)?.disconnect();
+            sdks.current.delete(id);
+            update(id, { sdk: null });
+        },
+        [update],
+    );
 
-    // Opens a socket for a controller and keeps its state up to date with the SDK events
     const connect = useCallback(
         (id: number): ControllerSDK => {
             close(id);
@@ -58,9 +57,8 @@ export function useVirtualControllers(): VirtualControllers {
             const sdk = connect(id);
             try {
                 const playerId = await sdk.joinRoom(roomCode, name);
-                update(id, { phase: 'joined', playerId, isHost: sdk.isHost, error: '' });
+                update(id, { phase: 'joined', playerId, isHost: sdk.isHost, error: '', sdk });
             } catch (err) {
-                // Refused (unknown room, room full, name refused...): the box stays to show why
                 close(id);
                 update(id, { phase: 'failed', connected: false, error: errorText(err) });
             }
@@ -68,7 +66,6 @@ export function useVirtualControllers(): VirtualControllers {
         [close, connect, update],
     );
 
-    /** Cuts the connection like a phone losing the network: the server keeps the place 30 s. */
     const dropConnection = useCallback(
         (id: number) => {
             close(id);
@@ -77,7 +74,6 @@ export function useVirtualControllers(): VirtualControllers {
         [close, update],
     );
 
-    /** Comes back with the same player ID, like a phone reloading the page. */
     const reconnect = useCallback(
         async (id: number) => {
             const controller = controllers.find((c) => c.id === id);
@@ -91,7 +87,7 @@ export function useVirtualControllers(): VirtualControllers {
                     controller.name,
                     controller.playerId,
                 );
-                update(id, { phase: 'joined', playerId, isHost: sdk.isHost });
+                update(id, { phase: 'joined', playerId, isHost: sdk.isHost, sdk });
             } catch (err) {
                 close(id);
                 update(id, { phase: 'offline', connected: false, error: errorText(err) });
@@ -114,7 +110,6 @@ export function useVirtualControllers(): VirtualControllers {
         setControllers([]);
     }, []);
 
-    // The controllers survive page changes; they only go when the whole app goes
     useEffect(() => {
         const open = sdks.current;
         return () => {
