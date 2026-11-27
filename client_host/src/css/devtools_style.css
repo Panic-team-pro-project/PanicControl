@@ -26,7 +26,9 @@
 }
 
 .devtools button:focus-visible,
-.devtools input:focus-visible {
+.devtools input:focus-visible,
+.devtools select:focus-visible,
+.devtools summary:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
@@ -37,7 +39,8 @@
     color: var(--text-h);
 }
 
-.devtools input {
+.devtools input,
+.devtools select {
     width: 100%;
     box-sizing: border-box;
     padding: 8px 10px;
@@ -278,8 +281,6 @@
     }
 }
 
-/* Controls of a joined box: the phone's own controls (ControllerControls, styled by
-   controller_test_style.css), made to fit a box */
 .devtools-controls {
     display: flex;
     flex-direction: column;
@@ -338,4 +339,129 @@
 .devtools .devtools-recent button {
     padding: 2px 8px;
     font-size: 0.8rem;
+}
+
+/* Tabs */
+.devtools-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 6px 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.devtools .devtools-tabs button {
+    padding: 6px 12px;
+    border-color: transparent;
+    border-radius: 6px 6px 0 0;
+    background: transparent;
+    color: var(--text);
+}
+
+.devtools .devtools-tabs button[aria-selected='true'] {
+    border-color: var(--border);
+    border-bottom-color: transparent;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--text-h);
+    font-weight: 600;
+}
+
+/* Messages received by a box */
+.devtools-received {
+    font-size: 0.8rem;
+}
+
+.devtools-received ul {
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.devtools-received li {
+    overflow-wrap: anywhere;
+}
+
+/* Message log */
+.devtools-log {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.devtools-log-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.8rem;
+}
+
+.devtools-log-line {
+    border-bottom: 1px solid var(--border);
+}
+
+.devtools-log-line summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    padding: 3px 2px;
+    cursor: pointer;
+}
+
+.devtools-log-time {
+    font-variant-numeric: tabular-nums;
+}
+
+.devtools-log-direction {
+    width: 1em;
+    font-weight: 700;
+    text-align: center;
+}
+
+.devtools-log-in .devtools-log-direction {
+    color: var(--devtools-ok);
+}
+
+.devtools-log-out .devtools-log-direction {
+    color: var(--accent);
+}
+
+.devtools-log-source {
+    color: var(--text-h);
+    font-weight: 600;
+}
+
+.devtools-log-event {
+    color: var(--text-h);
+}
+
+.devtools-log-payload {
+    flex-basis: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.devtools-log-line pre {
+    max-height: 240px;
+    margin: 0 0 6px;
+    padding: 6px 8px;
+    overflow: auto;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--text) 10%, transparent);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* The log in its own window */
+.devtools-popout {
+    box-sizing: border-box;
+    min-height: 100vh;
+    padding: 12px 16px;
+    background: var(--bg);
+}
+
+.devtools-popout h1 {
+    margin: 0 0 12px;
+    color: var(--text-h);
+    font-size: 1.1rem;
 }

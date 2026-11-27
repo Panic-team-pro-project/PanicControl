@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ControllerSDK } from 'sdk';
 import { SDK_DEBUG, SERVER_URL } from '../config';
-import { newController } from './virtualControllers';
+import type { RecordTraffic } from './useMessageLog';
+import { controllerSourceId, newController } from './virtualControllers';
 import type { VirtualController } from './virtualControllers';
 
 export interface VirtualControllers {
@@ -13,7 +14,7 @@ export interface VirtualControllers {
     removeAll: () => void;
 }
 
-export function useVirtualControllers(): VirtualControllers {
+export function useVirtualControllers(record: RecordTraffic): VirtualControllers {
     const [controllers, setControllers] = useState<VirtualController[]>([]);
     const sdks = useRef(new Map<number, ControllerSDK>());
     const nextId = useRef(1);
@@ -32,12 +33,13 @@ export function useVirtualControllers(): VirtualControllers {
     );
 
     const connect = useCallback(
-        (id: number): ControllerSDK => {
+        (id: number, name: string): ControllerSDK => {
             close(id);
 
             const sdk = new ControllerSDK({ serverUrl: SERVER_URL, debug: SDK_DEBUG });
             sdks.current.set(id, sdk);
 
+            sdk.onTraffic((entry) => record(controllerSourceId(id), name, entry));
             sdk.onConnect(() => update(id, { connected: true }));
             sdk.onDisconnect(() => update(id, { connected: false }));
             sdk.onPromoteToHost(() => update(id, { isHost: true }));
@@ -46,7 +48,7 @@ export function useVirtualControllers(): VirtualControllers {
 
             return sdk;
         },
-        [close, update],
+        [close, record, update],
     );
 
     const add = useCallback(
@@ -54,7 +56,7 @@ export function useVirtualControllers(): VirtualControllers {
             const id = nextId.current++;
             setControllers((list) => [...list, newController(id, name, roomCode)]);
 
-            const sdk = connect(id);
+            const sdk = connect(id, name);
             try {
                 const playerId = await sdk.joinRoom(roomCode, name);
                 update(id, { phase: 'joined', playerId, isHost: sdk.isHost, error: '', sdk });
@@ -80,7 +82,7 @@ export function useVirtualControllers(): VirtualControllers {
             if (!controller?.playerId) return;
 
             update(id, { phase: 'joining', error: '' });
-            const sdk = connect(id);
+            const sdk = connect(id, controller.name);
             try {
                 const playerId = await sdk.reconnectToRoom(
                     controller.roomCode,

@@ -3,9 +3,10 @@ import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import '../css/devtools_style.css';
 import DevOverlay from './DevOverlay';
-import { DevToolsContext } from './devToolsContext';
-import type { DevTools } from './devToolsContext';
+import { DevToolsContext, MessageLogContext } from './devToolsContext';
+import type { DevTools, TrafficSource } from './devToolsContext';
 import { isDevShortcut, readDevMode, storeDevMode, tabStorage } from './devMode';
+import { useMessageLog } from './useMessageLog';
 import { useVirtualControllers } from './useVirtualControllers';
 
 export default function DevToolsProvider({ children }: { children: ReactNode }) {
@@ -14,7 +15,9 @@ export default function DevToolsProvider({ children }: { children: ReactNode }) 
     const [open, setOpen] = useState(false);
     const [consoleRoom, setConsoleRoom] = useState<string | null>(null);
     const [seenSearch, setSeenSearch] = useState(search);
-    const simulator = useVirtualControllers();
+    const [consoleSdk, setConsoleSdk] = useState<TrafficSource | null>(null);
+    const { record, ...log } = useMessageLog();
+    const simulator = useVirtualControllers(record);
 
     // Option to turn on developer mode
     if (search !== seenSearch) {
@@ -22,12 +25,10 @@ export default function DevToolsProvider({ children }: { children: ReactNode }) 
         if (new URLSearchParams(search).has('debug')) setEnabledState(true);
     }
 
-    // Stays on across reloads
     useEffect(() => {
         storeDevMode(tabStorage(), enabled);
     }, [enabled]);
 
-    // Remove all virtual controllers when developer mode is turned off
     const { removeAll } = simulator;
     const setEnabled = useCallback(
         (on: boolean) => {
@@ -38,6 +39,23 @@ export default function DevToolsProvider({ children }: { children: ReactNode }) 
             }
         },
         [removeAll],
+    );
+
+    const registerConsole = useCallback((sdk: TrafficSource) => {
+        setConsoleSdk(sdk);
+        return () => setConsoleSdk((current) => (current === sdk ? null : current));
+    }, []);
+
+    // Log the console page's messages while developer mode is on
+    useEffect(() => {
+        if (!enabled || !consoleSdk) return;
+        return consoleSdk.onTraffic((entry) => record('console', 'Console', entry));
+    }, [enabled, consoleSdk, record]);
+
+    const { entries, pause, setPaused, clear } = log;
+    const logView = useMemo(
+        () => ({ entries, pause, setPaused, clear }),
+        [entries, pause, setPaused, clear],
     );
 
     // Command shortcut to toggle developer mode (Ctrl+Shift+D on Windows/Linux, Cmd+Shift+D on Mac)
@@ -52,32 +70,43 @@ export default function DevToolsProvider({ children }: { children: ReactNode }) 
     }, [enabled, setEnabled]);
 
     const value = useMemo<DevTools>(
-        () => ({ enabled, setEnabled, open, setOpen, consoleRoom, setConsoleRoom, simulator }),
-        [enabled, setEnabled, open, consoleRoom, simulator],
+        () => ({
+            enabled,
+            setEnabled,
+            open,
+            setOpen,
+            consoleRoom,
+            setConsoleRoom,
+            simulator,
+            registerConsole,
+        }),
+        [enabled, setEnabled, open, consoleRoom, simulator, registerConsole],
     );
 
     return (
         <DevToolsContext.Provider value={value}>
             {children}
             {enabled && (
-                <div className="devtools">
-                    <button
-                        type="button"
-                        className="devtools-launcher"
-                        aria-haspopup="dialog"
-                        aria-expanded={open}
-                        onClick={() => setOpen(true)}
-                    >
-                        🛠 Dev
-                        {simulator.controllers.length > 0 && (
-                            <span className="devtools-count">
-                                {simulator.controllers.length}
-                                <span className="devtools-sr-only"> manettes virtuelles</span>
-                            </span>
-                        )}
-                    </button>
-                    <DevOverlay />
-                </div>
+                <MessageLogContext.Provider value={logView}>
+                    <div className="devtools">
+                        <button
+                            type="button"
+                            className="devtools-launcher"
+                            aria-haspopup="dialog"
+                            aria-expanded={open}
+                            onClick={() => setOpen(true)}
+                        >
+                            🛠 Dev
+                            {simulator.controllers.length > 0 && (
+                                <span className="devtools-count">
+                                    {simulator.controllers.length}
+                                    <span className="devtools-sr-only"> manettes virtuelles</span>
+                                </span>
+                            )}
+                        </button>
+                        <DevOverlay />
+                    </div>
+                </MessageLogContext.Provider>
             )}
         </DevToolsContext.Provider>
     );

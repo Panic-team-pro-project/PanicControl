@@ -1,11 +1,18 @@
 import { useState } from 'react';
-import type { SubmitEvent } from 'react';
-import { useDevTools } from './devToolsContext';
-import { PHASE_LABELS, nextBotName, normalizeRoomCode } from './virtualControllers';
+import type { ReactNode, SubmitEvent } from 'react';
+import { useDevTools, useMessageLogView } from './devToolsContext';
+import { formatPayload, receivedMessages } from './logEntries';
+import {
+    PHASE_LABELS,
+    controllerSourceId,
+    nextBotName,
+    normalizeRoomCode,
+} from './virtualControllers';
 import type { VirtualController } from './virtualControllers';
 import VirtualGameControls from './VirtualGameControls';
 
-export default function ControllerSimulator() {
+// `windowButton` opens or closes the separate window showing the controllers
+export default function ControllerSimulator({ windowButton }: { windowButton?: ReactNode }) {
     const { consoleRoom, simulator } = useDevTools();
     const { controllers, add, removeAll } = simulator;
     const [roomInput, setRoomInput] = useState(consoleRoom ?? '');
@@ -65,6 +72,7 @@ export default function ControllerSimulator() {
                 >
                     Tout retirer
                 </button>
+                {windowButton}
             </form>
 
             <p className="devtools-note" aria-live="polite">
@@ -126,6 +134,8 @@ function VirtualPhone({ controller }: { controller: VirtualController }) {
 
             {online && sdk && <VirtualGameControls sdk={sdk} id={id} />}
 
+            <ReceivedMessages id={id} />
+
             <div className="devtools-phone-actions">
                 {phase === 'joined' && (
                     <button
@@ -151,5 +161,31 @@ function VirtualPhone({ controller }: { controller: VirtualController }) {
                 </button>
             </div>
         </li>
+    );
+}
+
+// The last game messages this controller received, taken from the log
+function ReceivedMessages({ id }: { id: number }) {
+    const { entries } = useMessageLogView();
+    const messages = receivedMessages(entries, controllerSourceId(id));
+    if (messages.length === 0) return null;
+
+    return (
+        <div className="devtools-received">
+            <p className="devtools-note">Derniers messages reçus</p>
+            <ul>
+                {messages.map(({ id: entryId, type, data, isPrivate }) => (
+                    <li key={entryId}>
+                        <span title={isPrivate ? 'Privé' : 'À tous'}>
+                            <span aria-hidden="true">{isPrivate ? '🔒' : '📢'}</span>
+                            <span className="devtools-sr-only">
+                                {isPrivate ? 'Privé : ' : 'À tous : '}
+                            </span>
+                        </span>{' '}
+                        <code>{type}</code> {formatPayload(data, 40)}
+                    </li>
+                ))}
+            </ul>
+        </div>
     );
 }

@@ -47,3 +47,7 @@ export function nextBotName(names: string[]): string {
 export function normalizeRoomCode(code: string): string {
     return code.trim().toUpperCase();
 }
+
+export function controllerSourceId(id: number): string {
+    return `controller-${id}`;
+}

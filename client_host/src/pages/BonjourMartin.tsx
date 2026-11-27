@@ -5,7 +5,7 @@ import '../css/bonjour_martin_style.css';
 import { ConsoleSDK } from 'sdk';
 import type { AccessibilityFeature, GameManifest, PlayerListInfo } from 'sdk';
 import { PUBLIC_URL, SDK_DEBUG, SERVER_URL } from '../config';
-import { useConsoleRoom } from '../devtools/devToolsContext';
+import { useConsoleRoom, useDevTools } from '../devtools/devToolsContext';
 
 const FEATURE_LABELS: Record<AccessibilityFeature, string> = {
     colorBlind: 'Mode daltonien',
@@ -39,10 +39,12 @@ export default function BonjourMartin() {
 
     // Developer mode
     useConsoleRoom(roomCode);
+    const { registerConsole } = useDevTools();
 
     useEffect(() => {
         const sdk = new ConsoleSDK({ serverUrl: SERVER_URL, debug: SDK_DEBUG });
         sdkRef.current = sdk;
+        const unregisterConsole = registerConsole(sdk);
 
         sdk.onConnect(() => {
             setConnected(true);
@@ -95,10 +97,11 @@ export default function BonjourMartin() {
         });
 
         return () => {
+            unregisterConsole();
             sdk.disconnect();
             sdkRef.current = null;
         };
-    }, []);
+    }, [registerConsole]);
 
     async function createRoom() {
         if (!sdkRef.current) {
