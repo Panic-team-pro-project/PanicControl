@@ -2,10 +2,13 @@ import type { Socket } from 'socket.io-client';
 import eventsCodes from 'common';
 import type { ErrorCode } from 'common';
 import { PanicControlError } from './errors.js';
+import type { TrafficDirection, TrafficEntry } from './Types/sharedTypes.js';
 
 const { ClientEvents, ErrorCodes } = eventsCodes;
 
 const REQUEST_TIMEOUT_MS = 5000;
+
+type TrafficListener = (entry: TrafficEntry) => void;
 
 // The channel carries every message the SDK exchanges with the platform, so the socket
 // can later be replaced by postMessage (game isolated in an iframe, a future PostMessageChannel
@@ -13,6 +16,8 @@ const REQUEST_TIMEOUT_MS = 5000;
 // ControllerSDK.
 export class SocketChannel {
     private readonly socket: Socket;
+    private readonly trafficListeners = new Set<TrafficListener>();
+    private stopWatching: (() => void) | null = null;
 
     constructor(socket: Socket) {
         this.socket = socket;
@@ -27,6 +32,7 @@ export class SocketChannel {
     }
 
     emit(event: string, ...args: unknown[]): void {
+        this.record('out', event, args);
         this.socket.emit(event, ...args);
     }
 
@@ -43,12 +49,15 @@ export class SocketChannel {
     async request(event: string, payload: unknown = {}): Promise<void> {
         let response: unknown;
 
+        this.record('out', event, [payload]);
         try {
             response = await this.socket.timeout(REQUEST_TIMEOUT_MS).emitWithAck(event, payload);
         } catch {
+            this.record('system', `${event} (timeout)`, []);
             throw new PanicControlError('TIMEOUT', `No answer from the server for "${event}"`);
         }
 
+        this.record('in', `${event} (ack)`, [response]);
         if (!isRecord(response)) {
             throw new PanicControlError('BAD_RESPONSE', `Malformed answer for "${event}"`);
         }
@@ -86,6 +95,59 @@ export class SocketChannel {
 
             send();
         });
+    }
+
+    /**
+     * Calls the listener with every message sent and received, and with connection changes.
+     * The socket is only watched while at least one listener exists. Returns the unsubscribe
+     * function.
+     */
+    onTraffic(listener: TrafficListener): () => void {
+        this.trafficListeners.add(listener);
+        this.stopWatching ??= this.watchSocket();
+
+        return () => {
+            this.trafficListeners.delete(listener);
+            if (this.trafficListeners.size === 0) {
+                this.stopWatching?.();
+                this.stopWatching = null;
+            }
+        };
+    }
+
+    // What this channel sends is recorded by emit and request; this adds what the server sends.
+    private watchSocket(): () => void {
+        const incoming = (event: string, ...args: unknown[]): void =>
+            this.record('in', event, args);
+        const connected = (): void => this.record('system', 'connect', []);
+        const disconnected = (reason: string): void =>
+            this.record('system', 'disconnect', [reason]);
+        const failed = (error: Error): void =>
+            this.record('system', 'connect_error', [error.message]);
+
+        this.socket.onAny(incoming);
+        this.socket.on('connect', connected);
+        this.socket.on('disconnect', disconnected);
+        this.socket.on('connect_error', failed);
+
+        return () => {
+            this.socket.offAny(incoming);
+            this.socket.off('connect', connected);
+            this.socket.off('disconnect', disconnected);
+            this.socket.off('connect_error', failed);
+        };
+    }
+
+    private record(direction: TrafficDirection, event: string, args: unknown[]): void {
+        if (this.trafficListeners.size === 0) return;
+
+        const entry: TrafficEntry = {
+            direction,
+            event,
+            data: args.length > 1 ? args : args[0],
+            time: Date.now(),
+        };
+        for (const listener of [...this.trafficListeners]) listener(entry);
     }
 
     private once<T extends unknown[]>(event: string, handler: (...args: T) => void): () => void {

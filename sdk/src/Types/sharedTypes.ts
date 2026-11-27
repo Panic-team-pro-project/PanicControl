@@ -33,3 +33,21 @@ export interface MessageMeta {
     /** `true` when the message was sent to this player only, `false` when broadcast. */
     isPrivate: boolean;
 }
+
+/** Where a message went, seen from this SDK: received, sent, or a change of the connection. */
+export type TrafficDirection = 'in' | 'out' | 'system';
+
+/** One message exchanged with the server, for debugging tools. */
+export interface TrafficEntry {
+    direction: TrafficDirection;
+    /**
+     * Socket event name, such as `send_action` or `game_message`.
+     * An answer to a request is `<event> (ack)`, a request without answer `<event> (timeout)`.
+     * `connect`, `disconnect` and `connect_error` are `system` entries.
+     */
+    event: string;
+    /** The event's argument, an array when there are several, `undefined` when there is none. */
+    data: unknown;
+    /** `Date.now()` when the message went through the SDK. */
+    time: number;
+}

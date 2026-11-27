@@ -13,4 +13,11 @@ export type {
 } from 'common/gameManifest';
 export type { ConsoleSDKOptions, PlayerListInfo } from './Types/consoleTypes.js';
 export type { ControllerSDKOptions } from './Types/controllerTypes.js';
-export type { CatalogueState, MessageMap, MessageMeta, PlayerState } from './Types/sharedTypes.js';
+export type {
+    CatalogueState,
+    MessageMap,
+    MessageMeta,
+    PlayerState,
+    TrafficDirection,
+    TrafficEntry,
+} from './Types/sharedTypes.js';

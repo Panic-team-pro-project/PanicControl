@@ -9,6 +9,7 @@ import type {
     MessageMap,
     MessageMeta,
     PlayerState,
+    TrafficEntry,
 } from './Types/sharedTypes.js';
 
 const { ClientEvents, ServerEvents } = eventsCodes;
@@ -116,6 +117,15 @@ export class ControllerSDK<A extends object = MessageMap, M extends object = Mes
     /** Called when the connection to the server is lost. Returns the unsubscribe function. */
     onDisconnect(callback: (reason: string) => void): () => void {
         return this.channel.on('disconnect', (reason: string) => callback(reason));
+    }
+
+    /**
+     * Called with every message this controller sends and receives, and with connection changes.
+     * For debugging tools, such as the developer mode message log: games should use the typed
+     * methods. Returns the unsubscribe function.
+     */
+    onTraffic(callback: (entry: TrafficEntry) => void): () => void {
+        return this.channel.onTraffic(callback);
     }
 
     /** Closes the connection to the server. */
