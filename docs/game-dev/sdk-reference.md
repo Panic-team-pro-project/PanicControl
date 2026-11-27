@@ -198,6 +198,27 @@ Both reject with a plain `Error` carrying the server message (`Room not found`,
 `Invalid player name`, `Room is full`,
 `This player is already connected.`) or a timeout message after 5 s.
 
+## Debugging
+
+Both SDKs have `onTraffic(cb: (entry: TrafficEntry) => void): () => void`. It calls `cb` with
+every message the SDK sends and receives, and with connection changes. Developer mode's message
+log uses it. Games should use the typed methods above; `onTraffic` is for debugging tools.
+
+- `direction`: `'out'` for sent, `'in'` for received, `'system'` for `connect`, `disconnect`,
+  `connect_error` and request timeouts.
+- `event`: the socket event name, such as `send_action` or `game_message`. The answer to a request
+  is `<event> (ack)`, a request without answer `<event> (timeout)`.
+- `data`: the event's argument, an array when there are several, `undefined` when there is none.
+- `time`: `Date.now()` when the message went through the SDK.
+
+The socket is only watched while at least one `onTraffic` listener exists.
+
+```ts
+const off = sdk.onTraffic(({ direction, event, data }) => {
+  console.debug(direction, event, data);
+});
+```
+
 ## Types
 
 ```ts
@@ -205,6 +226,12 @@ type MessageMap = Record<string, unknown>;
 type CatalogueState = { games: GameManifest[]; selectedGameId: string | null };
 type PlayerState = { role: string | null; status: string | null };
 type MessageMeta = { isPrivate: boolean };
+type TrafficEntry = {
+  direction: 'in' | 'out' | 'system';
+  event: string;
+  data: unknown;
+  time: number;
+};
 type PlayerListInfo = {
   name: string;
   playerId: string;
@@ -216,7 +243,8 @@ type PlayerListInfo = {
 ```
 
 Also exported: `SdkErrorCode`, `ErrorCode`, `AccessibilityFeature`, `ControllerComponent`,
-`Direction`, `GameEntry`, `GameManifest`, `ConsoleSDKOptions`, `ControllerSDKOptions`.
+`Direction`, `GameEntry`, `GameManifest`, `ConsoleSDKOptions`, `ControllerSDKOptions`,
+`TrafficDirection`.
 `GameManifest` mirrors the [manifest](manifest.md).
 
 ## Error codes
@@ -262,5 +290,5 @@ Also exported: `SdkErrorCode`, `ErrorCode`, `AccessibilityFeature`, `ControllerC
 - Controller components rendered by the platform, vibration, sensors (with iOS permission and touch
   fallback).
 - Reading the player's accessibility options from the SDK.
-- Developer mode: message log, latency.
+- Developer mode: latency.
 - Pause, turns, scores, achievements and end screen helpers.

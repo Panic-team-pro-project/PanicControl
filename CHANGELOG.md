@@ -44,7 +44,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   dragged anywhere on the screen, on every page. Its virtual controllers join a room like phones:
   each one is a real `ControllerSDK`, so the server applies the same rules (player limit, host,
   reconnection), and they stay connected across pages. They drive the catalogue and the game with
-  the same controls as the phone page, show the player's role and status, and send game actions.
+  the same controls as the phone page, show the player's role and status, send game actions, and
+  list the last game messages they received. A message log tab lists what the console page and
+  the virtual controllers send and receive, with filters, pause, clearing and JSON export. The virtual controllers and the log can each be
+  moved to a separate window that updates live.
+- SDK: `onTraffic` on `ConsoleSDK` and `ControllerSDK` reports every message sent and received and
+  the connection changes (`TrafficEntry`), for debugging tools.
 - Docs: technical documentation (architecture, data model, real-time protocol, server, SDK architecture) and a game developer guide (SDK reference, manifest, tutorial preview) in `docs/`.
 
 ### Changed

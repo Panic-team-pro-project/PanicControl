@@ -1,7 +1,8 @@
 # Testing without phones
 
 Developer mode lets you test a game on one computer: **virtual controllers** join a room like
-phones, so you don't need to hold several phones.
+phones, so you don't need to hold several phones, and a **message log** shows what goes through
+the room.
 
 ## Turning developer mode on
 
@@ -21,6 +22,11 @@ you can create a room or watch the player list while the overlay is open.
 - **Move it** by dragging its title bar, with the mouse or a finger. With the keyboard, focus the ⠿
   handle and use the arrow keys (Shift + arrow for bigger steps). It stays inside the window, and
   comes back where you left it, in the same tab.
+- **⧉ Ouvrir dans une fenêtre**, in the virtual controllers' toolbar and in the log's, moves that
+  tool to a separate browser window that updates live, to keep it beside the page or on another
+  screen. The controllers stay connected when they move. "Ramener dans la page", or closing the
+  window, brings the tool back. The windows close with the page, and when developer mode is turned
+  off. If the browser blocks them, allow pop-up windows for the site.
 - **Close it** with ✕ or Escape. The virtual controllers stay connected when it's closed, and when
   you change page.
 
@@ -96,6 +102,44 @@ Two helpers exist only in the boxes, for developers:
   `onAction('jump', ...)`, from this player. The last 5 action names stay as buttons, to send them
   again without data.
 
-## Coming next
+Each box also lists the **last 5 game messages it received**: 🔒 for a message sent to this player
+only (`sendToPlayer`), 📢 for a message sent to everyone (`broadcast`).
 
-- A log of the messages exchanged in the room, and the messages each box receives.
+## Message log
+
+The overlay's **Journal** tab lists the messages sent and received by:
+
+- the console page (source "Console"), while it's open in this tab;
+- each virtual controller (source: its name).
+
+Real phones aren't in the log from their side: you see their actions as `player_action` received by
+the console. The log is in the browser tab, not on the server.
+
+Each line shows the time, the direction, the source, the socket event and the start of its data.
+Click a line to see the full data.
+
+| Symbol | Direction | Examples                                                  |
+| ------ | --------- | --------------------------------------------------------- |
+| ↑      | Sent      | `send_action`, `navigate_catalogue`, `broadcast_message`  |
+| ↓      | Received  | `player_action`, `game_message`, `update_players`         |
+| ●      | Connexion | `connect`, `disconnect`, `connect_error`, request timeout |
+
+The answer to a request that waits for one is logged as `<event> (ack)`, for example
+`start_game (ack)` with `{ "ok": false, "error": { "code": "NOT_ENOUGH_PLAYERS", ... } }`. When the
+server doesn't answer within 5 seconds, `<event> (timeout)` is logged.
+
+For example, a box sending `jump` shows `↑ send_action` from that box, then
+`↓ player_action` from the console. A `broadcast` shows `↑ broadcast_message` from the console,
+then `↓ game_message` on every box.
+
+- **Filter** by source, direction, or part of the event name.
+- **Pause** freezes the list so you can read or open a line while the game goes on. Recording
+  continues behind it: the count of new messages shows, and "Reprendre" shows them.
+- **Vider** empties the log, and **Exporter en JSON**
+  downloads the messages currently shown, to attach to a bug report.
+- **⧉ Ouvrir dans une fenêtre** moves the log to its own window, as for the virtual controllers.
+- The log keeps the last 500 messages and shows the 200 most recent of the filtered ones. It
+  survives page changes, and empties when the tab is reloaded.
+
+Your game can read the same messages from its own SDK with `onTraffic`: see the
+[SDK reference](sdk-reference.md#debugging).
